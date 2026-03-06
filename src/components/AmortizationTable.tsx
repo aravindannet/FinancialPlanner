@@ -66,7 +66,7 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
 
   if (state.isCombinedView) {
     return (
-      <div className="glass-panel" style={{ marginTop: 'var(--spacing-xl)', padding: 'var(--spacing-xl)', overflowX: 'auto' }}>
+      <div className="glass-panel" style={{ marginTop: 'var(--spacing-xl)', padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%' }}>
         <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Yearly Breakdown (Household Total)</h3>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap' }}>
           {renderTableHead()}
