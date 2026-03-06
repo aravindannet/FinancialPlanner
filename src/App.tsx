@@ -221,7 +221,7 @@ function App() {
       
       <Dashboard data={projectionData} state={state} updateState={updateState} />
       
-      <ChatInterface />
+      <ChatInterface state={state} updateState={updateState} data={projectionData} />
     </div>
   );
 }
