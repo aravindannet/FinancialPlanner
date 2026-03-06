@@ -114,22 +114,117 @@ To fix this, consider:
     }
 
     // 6. Assumption Updates
-    if (q.includes('set') || q.includes('change') || q.includes('update')) {
+    if (q.includes('set') || q.includes('change') || q.includes('update') || q.includes('make') || q.includes('put')) {
       const valMatch = q.match(/(\d+(?:\.\d+)?)/);
       if (valMatch) {
         const val = parseFloat(valMatch[0]);
+        const isSpouse = q.includes('spouse') || q.includes('wife') || q.includes('husband');
+
+        // Inflation
         if (q.includes('inflation')) {
           updateState('inflation', val);
           return `✅ Done. I've updated the **Annual Inflation** to **${val}%**.`;
         }
+        
+        // Return
         if (q.includes('return') || q.includes('growth') || q.includes('interest')) {
           updateState('expectedReturn', val);
           return `✅ Done. I've updated the **Expected Return** to **${val}%**.`;
         }
-        if (q.includes('contribution') || q.includes('save')) {
-          updateState('userContribution', val);
-          return `✅ Done. Your **Annual Contribution** is now **$${val.toLocaleString()}**.`;
+
+        // Retirement Age
+        if (q.includes('retire') || q.includes('retirement age')) {
+          if (isSpouse) {
+            updateState('spouseRetireAge', val);
+            return `✅ Done. I've set your **Spouse's Retirement Age** to **${val}**.`;
+          } else {
+            updateState('retireAge', val);
+            return `✅ Done. I've set your **Retirement Age** to **${val}**.`;
+          }
         }
+
+        // Income
+        if (q.includes('income') || q.includes('salary') || q.includes('earn')) {
+          if (isSpouse) {
+            updateState('spouseIncome', val);
+            return `✅ Done. **Spouse's Income** is now **$${val.toLocaleString()}**.`;
+          } else {
+            updateState('userIncome', val);
+            return `✅ Done. Your **Income** is now **$${val.toLocaleString()}**.`;
+          }
+        }
+
+        // Contributions
+        if (q.includes('contribution') || q.includes('save')) {
+          if (isSpouse) {
+            updateState('spouseContribution', val);
+            return `✅ Done. **Spouse's Contribution** is now **$${val.toLocaleString()}**.`;
+          } else {
+            updateState('userContribution', val);
+            return `✅ Done. Your **Contribution** is now **$${val.toLocaleString()}**.`;
+          }
+        }
+
+        // Match
+        if (q.includes('match')) {
+          if (isSpouse) {
+            updateState('spouseMatchPct', val);
+            return `✅ Done. **Spouse's Match** set to **${val}%**.`;
+          } else {
+            updateState('userMatchPct', val);
+            return `✅ Done. Your **Match** set to **${val}%**.`;
+          }
+        }
+
+        // Balance
+        if (q.includes('balance') || q.includes('portfolio') || q.includes('have now') || q.includes('starting')) {
+          if (isSpouse) {
+            updateState('currentBalanceSpouse', val);
+            return `✅ Done. **Spouse's Current Balance** updated to **$${val.toLocaleString()}**.`;
+          } else if (q.includes('combined') || q.includes('total')) {
+            // No easy way to split total, so just ignore or assume primary
+            return "I can't set the combined balance directly. Please tell me your individual balance instead!";
+          } else {
+            updateState('currentBalanceUser', val);
+            return `✅ Done. Your **Current Balance** updated to **$${val.toLocaleString()}**.`;
+          }
+        }
+
+        // Social Security
+        if (q.includes('social security') || q.includes('ss ')) {
+          updateState('socialSecurity', val);
+          return `✅ Done. **Social Security** set to **$${val.toLocaleString()}/mo**.`;
+        }
+
+        // Taxes
+        if (q.includes('tax')) {
+          updateState('taxRate', val);
+          return `✅ Done. **Effective Tax Rate** set to **${val}%**.`;
+        }
+
+        // Life Expectancy
+        if (q.includes('life') || q.includes('live until')) {
+          updateState('lifeExpectancy', val);
+          return `✅ Done. **Life Expectancy** updated to **Age ${val}**.`;
+        }
+
+        // Withdrawal Rate
+        if (q.includes('withdrawal rate') || q.includes('take out')) {
+          if (isSpouse) {
+            updateState('spouseWithdrawalRate', val);
+            return `✅ Done. **Spouse's Withdrawal Rate** set to **$${val.toLocaleString()}/yr**.`;
+          } else {
+            updateState('userWithdrawalRate', val);
+            return `✅ Done. Your **Withdrawal Rate** set to **$${val.toLocaleString()}/yr**.`;
+          }
+        }
+      }
+
+      // Toggles (No value needed)
+      if (q.includes('stress test') || q.includes('crash') || q.includes('2008')) {
+        const newState = !state.enableStressTest;
+        updateState('enableStressTest', newState);
+        return `✅ **Stress Test** (2008 Crash Simulation) is now **${newState ? 'ENABLED' : 'DISABLED'}**.`;
       }
     }
 
