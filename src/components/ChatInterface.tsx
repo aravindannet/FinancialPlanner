@@ -113,8 +113,11 @@ To fix this, consider:
       return `According to your settings, you plan to retire at age **${state.retireAge}**, and your spouse plans to retire at age **${state.spouseRetireAge}**.`;
     }
 
-    // 6. Assumption Updates
-    if (q.includes('set') || q.includes('change') || q.includes('update') || q.includes('make') || q.includes('put')) {
+    // 6. Assumption Updates (Handle "set", "what if", "change", or direct "inflation is 8%")
+    const updateKeywords = ['set', 'change', 'update', 'make', 'put', 'what if', 'if', 'balance is', 'income is', 'inflation is', 'return is'];
+    const hasUpdateIntent = updateKeywords.some(k => q.includes(k)) || (q.includes('is') && /\d/.test(q));
+
+    if (hasUpdateIntent) {
       const valMatch = q.match(/(\d+(?:\.\d+)?)/);
       if (valMatch) {
         const val = parseFloat(valMatch[0]);
@@ -123,7 +126,7 @@ To fix this, consider:
         // Inflation
         if (q.includes('inflation')) {
           updateState('inflation', val);
-          return `✅ Done. I've updated the **Annual Inflation** to **${val}%**.`;
+          return `✅ Done. I've updated the **Annual Inflation** to **${val}%**. The projection has been recalculated.`;
         }
         
         // Return
@@ -181,9 +184,6 @@ To fix this, consider:
           if (isSpouse) {
             updateState('currentBalanceSpouse', val);
             return `✅ Done. **Spouse's Current Balance** updated to **$${val.toLocaleString()}**.`;
-          } else if (q.includes('combined') || q.includes('total')) {
-            // No easy way to split total, so just ignore or assume primary
-            return "I can't set the combined balance directly. Please tell me your individual balance instead!";
           } else {
             updateState('currentBalanceUser', val);
             return `✅ Done. Your **Current Balance** updated to **$${val.toLocaleString()}**.`;
@@ -220,7 +220,7 @@ To fix this, consider:
         }
       }
 
-      // Toggles (No value needed)
+      // Toggles
       if (q.includes('stress test') || q.includes('crash') || q.includes('2008')) {
         const newState = !state.enableStressTest;
         updateState('enableStressTest', newState);
