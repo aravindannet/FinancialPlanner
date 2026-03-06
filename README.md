@@ -1,73 +1,62 @@
-# React + TypeScript + Vite
+# Aura Plan - Advanced Financial Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aura Plan is a premium, high-fidelity 401k retirement planning application built with **React**, **TypeScript**, and **Vite**. It features a custom **glassmorphism** design system and an advanced financial projection engine.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Advanced Retirement Intel**:
+  - **Social Security Integration**: Offset your withdrawal needs with expected monthly Social Security income.
+  - **Tax-Adjusted Withdrawals**: Automatically "grosses up" your retirement withdrawals to cover estimated effective taxes.
+  - **Inflation Protection**: Set your spending goals in *today's dollars*; the engine automatically adjusts for inflation every year to protect your purchasing power.
+- **Robust Financial Engine**:
+  - **Plan Runway Metric**: Instantly see at what age your funds will deplete, with visual alerts if you run out early.
+  - **Bad Market Stress Test**: Simulate a major market downturn (e.g., -30% return) during the first two years of retirement to test portfolio durability.
+  - **IRS 401k Limit Validation**: Intelligently caps contributions at the annual maximums ($23,500 base, plus $7,500 catch-up for Age 50+).
+- **Premium UI/UX**:
+  - **Dynamic Area Charts**: Visualize Nominal vs Real growth with gradients and million-dollar scale formatting.
+  - **Dual View Modes**: Switch between **Combined Household** health and **Separate** individual breakdowns.
+  - **Full-Screen Data Grid**: Expand the dashboard to fill the entire screen for deep data analysis.
+  - **Glassmorphism Design**: A sleek dark-mode interface with blurred surfaces and fluid micro-animations.
 
-## React Compiler
+## 🧮 How the Math Works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### The SS & Tax Logic
+1. **Net Need**: Your `Desired Withdrawal` minus `Annual Social Security`.
+2. **Gross-Up**: `Net Need / (1 - Tax Rate)` ensures you have enough for both bills and the IRS.
+3. **Compound Growth**: Yearly returns are calculated based on your `Expected Return` assumptions.
 
-## Expanding the ESLint configuration
+### Nominal vs. Real Value
+- **Nominal**: The "Sticker Price" - what your bank account statement will actually say.
+- **Real**: Adjusted for inflation - what those dollars are actually *worth* in today's purchasing power.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Core**: React 18, TypeScript, Vite
+- **Styling**: Vanilla CSS (CSS Variables, Flexbox/Grid)
+- **Charts**: Recharts (ComposedChart for Area/Line overlays)
+- **Icons**: Lucide-React
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 📦 Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. **Clone and Install**:
+   ```bash
+   git clone https://github.com/aravindannet/FinancialPlanner.git
+   cd FinancialPlanner
+   npm install
+   ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+3. **Build for Production**:
+   ```bash
+   npm run build
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📝 Branching Strategy
+- **`master`**: Stable production code.
+- **`Develop`**: Integration branch for new features.
+- **`Feature`**: Individual feature development work.
+
