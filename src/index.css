@@ -44,6 +44,29 @@
   --transition-normal: 0.3s ease-in-out;
 }
 
+:root[data-theme='light'] {
+  --bg-base: #f1f5f9;
+  --bg-surface: rgba(255, 255, 255, 0.7);
+  --bg-surface-hover: rgba(255, 255, 255, 0.9);
+  --bg-surface-active: rgba(255, 255, 255, 1);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-glow: rgba(37, 99, 235, 0.2);
+  
+  --accent-1: #059669; /* Green for positive/growth */
+  --accent-2: #7c3aed; /* Purple for spouse/secondary */
+  --accent-3: #d97706; /* Orange/Yellow for alerts/info */
+  --danger: #dc2626;   /* Red for withdrawals/loss */
+
+  --border: rgba(0, 0, 0, 0.08);
+  --border-focus: rgba(37, 99, 235, 0.3);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

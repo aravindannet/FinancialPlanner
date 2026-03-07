@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { InputPanel } from './components/InputPanel';
 import { Dashboard } from './components/Dashboard';
@@ -46,6 +46,7 @@ export interface AppState {
   isFullScreenDashboard: boolean;
   chartType: 'growth' | 'annual';
   contributionModel: 'end-of-year' | 'beginning-of-year' | 'mid-year';
+  theme: 'light' | 'dark';
 }
 
 export interface PersonYearData {
@@ -108,7 +109,12 @@ function App() {
     isFullScreenDashboard: false,
     chartType: 'growth',
     contributionModel: 'mid-year',
+    theme: 'dark',
   });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', state.theme);
+  }, [state.theme]);
 
   const updateState = (key: keyof AppState, value: any) => {
     setState(prev => ({ ...prev, [key]: value }));

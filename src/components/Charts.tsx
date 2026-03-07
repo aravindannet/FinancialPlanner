@@ -61,18 +61,18 @@ export const Charts: React.FC<ChartsProps> = ({ data, state }) => {
             />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#0f131c', 
-                borderColor: '#3b82f6', 
+                backgroundColor: 'var(--bg-base)', 
+                borderColor: 'var(--primary)', 
                 borderRadius: '10px', 
-                boxShadow: '0 20px 40px rgba(0,0,0,0.8)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
                 padding: '12px 16px',
                 opacity: 1
               }}
-              itemStyle={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}
-              labelStyle={{ color: '#94a3b8', marginBottom: '8px', fontWeight: 700, fontSize: '13px' }}
+              itemStyle={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}
+              labelStyle={{ color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 700, fontSize: '13px' }}
               labelFormatter={(label) => `Age ${label}`}
               formatter={(value: number | undefined, name: string | undefined) => [value != null ? formatCurrency(value) : '-', name ?? ''] as [string, string]}
-              cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
+              cursor={{ stroke: 'var(--primary)', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             <Legend verticalAlign="top" align="right" height={40} iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 500 }} />
             

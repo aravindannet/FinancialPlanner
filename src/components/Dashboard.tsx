@@ -8,7 +8,9 @@ import {
   HandCoins, 
   CalendarDays,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Charts } from './Charts';
 import { AmortizationTable } from './AmortizationTable';
@@ -76,7 +78,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
               <img src="/logo.png" alt="Aura Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, #fff, var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, var(--text-primary), var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
                 Retirement Projection
               </h1>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Advanced analysis of your cumulative household wealth.</p>
@@ -111,6 +113,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
               </button>
             </div>
           )}
+
+          <button
+            onClick={() => updateState('theme', state.theme === 'light' ? 'dark' : 'light')}
+            className="glass-panel"
+            style={{
+              padding: '0.5rem',
+              borderRadius: 'var(--radius-full)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              background: 'var(--bg-surface)'
+            }}
+            title={`Switch to ${state.theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {state.theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
 
           <button 
             onClick={() => updateState('isFullScreenDashboard', !state.isFullScreenDashboard)}
