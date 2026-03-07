@@ -4,9 +4,10 @@ import { Info } from 'lucide-react';
 interface InfoTooltipProps {
   text: string;
   align?: 'left' | 'center' | 'right';
+  children?: React.ReactNode;
 }
 
-export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center' }) => {
+export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center', children }) => {
   const [show, setShow] = useState(false);
 
   const getPositionStyles = () => {
@@ -27,11 +28,11 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center'
 
   return (
     <div 
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: '0.25rem', cursor: 'help' }}
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: children ? '0' : '0.25rem', cursor: 'help' }}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <Info size={14} color="var(--text-muted)" />
+      {children || <Info size={14} color="var(--text-muted)" />}
       
       {show && (
         <div style={{
@@ -39,7 +40,8 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center'
           bottom: '100%',
           ...getPositionStyles(),
           marginBottom: '8px',
-          width: '200px',
+          width: 'max-content',
+          maxWidth: '400px',
           padding: '0.75rem',
           backgroundColor: 'var(--bg-base)',
           color: 'var(--text-secondary)',
@@ -49,7 +51,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center'
           border: '1px solid var(--border)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           zIndex: 100,
-          whiteSpace: 'normal',
+          whiteSpace: 'pre-wrap',
           textAlign: 'left'
         }}>
           {text}

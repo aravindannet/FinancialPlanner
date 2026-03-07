@@ -57,7 +57,15 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.contributions)}</td>
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.employerMatch)}</td>
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.interestNominal)}</td>
-        <td style={{ padding: '0.75rem', color: 'var(--danger)' }}>{d.withdrawals > 0 ? `- $${formatNum(d.withdrawals)}` : '-'}</td>
+        <td style={{ padding: '0.75rem', color: 'var(--danger)' }}>
+          {d.withdrawals > 0 ? (
+            <InfoTooltip text={d.withdrawalDerivation || ""} align="center">
+              <span style={{ borderBottom: '1px dotted var(--danger)', cursor: 'help' }}>
+                - ${formatNum(d.withdrawals)}
+              </span>
+            </InfoTooltip>
+          ) : '-'}
+        </td>
         <td style={{ padding: '0.75rem', fontWeight: 600, color: 'var(--primary)' }}>${formatNum(d.endingBalanceNominal)}</td>
         <td style={{ padding: '0.75rem', fontWeight: 600, color: 'var(--accent-2)' }}>${formatNum(d.endingBalanceReal)}</td>
       </tr>

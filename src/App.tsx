@@ -43,6 +43,7 @@ export interface PersonYearData {
   employerMatch: number;
   interestNominal: number;
   withdrawals: number;
+  withdrawalDerivation?: string;
   endingBalanceNominal: number;
   endingBalanceReal: number;
 }
@@ -127,20 +128,30 @@ function App() {
 
       // Withdrawals: Inflate the user's input so their *real* net purchasing power stays flat.
       let userWithdrawal = 0;
+      let userDerivation = "";
       let spouseWithdrawal = 0;
+      let spouseDerivation = "";
       
+      const format = (v: number) => Math.round(v).toLocaleString();
+
       if (isUserRetired) {
-        // Net need = desired amount minus SS
-        let netNeed = Math.max(0, state.userWithdrawalRate - annualSS);
-        // Inflate for purchasing power, then gross up for taxes
-        let grossTarget = (netNeed * inflationMultiplier) * taxMultiplier;
-        userWithdrawal = Math.min(balanceUserNominal, grossTarget);
+        const netAfterSS = Math.max(0, state.userWithdrawalRate - annualSS);
+        const inflated = netAfterSS * inflationMultiplier;
+        const grossed = inflated * taxMultiplier;
+        userWithdrawal = Math.min(balanceUserNominal, grossed);
+        
+        userDerivation = `PRIMARY:\n• Current Year Expected Withdrawal: $${format(state.userWithdrawalRate)}\n• SS = $${format(annualSS)}\n• Today's "$${format(netAfterSS)}" after inflation adjusted is ($${format(netAfterSS)} * ${inflationMultiplier.toFixed(2)}) = $${format(inflated)}\n• If you want to take "$${format(inflated)}" from above then with ${state.taxRate}% tax from input you need to take out = $${format(grossed)}`;
+        if (userWithdrawal < grossed) userDerivation += `\n⚠️ Capped by Balance`;
       }
       
       if (isSpouseRetired) {
-        let netNeed = Math.max(0, state.spouseWithdrawalRate - annualSS);
-        let grossTarget = (netNeed * inflationMultiplier) * taxMultiplier;
-        spouseWithdrawal = Math.min(balanceSpouseNominal, grossTarget);
+        const netAfterSS = Math.max(0, state.spouseWithdrawalRate - annualSS);
+        const inflated = netAfterSS * inflationMultiplier;
+        const grossed = inflated * taxMultiplier;
+        spouseWithdrawal = Math.min(balanceSpouseNominal, grossed);
+
+        spouseDerivation = `SPOUSE:\n• Current Year Expected Withdrawal: $${format(state.spouseWithdrawalRate)}\n• SS = $${format(annualSS)}\n• Today's "$${format(netAfterSS)}" after inflation adjusted is ($${format(netAfterSS)} * ${inflationMultiplier.toFixed(2)}) = $${format(inflated)}\n• If you want to take "$${format(inflated)}" from above then with ${state.taxRate}% tax from input you need to take out = $${format(grossed)}`;
+        if (spouseWithdrawal < grossed) spouseDerivation += `\n⚠️ Capped by Balance`;
       }
 
       // Check Stress Test (-30% in first 2 years of retirement)
@@ -178,6 +189,7 @@ function App() {
           employerMatch: userMatch,
           interestNominal: userInterest,
           withdrawals: userWithdrawal,
+          withdrawalDerivation: userDerivation,
           endingBalanceNominal: balanceUserNominal,
           endingBalanceReal: balanceUserNominal / discountFactor
         },
@@ -189,6 +201,7 @@ function App() {
           employerMatch: spouseMatch,
           interestNominal: spouseInterest,
           withdrawals: spouseWithdrawal,
+          withdrawalDerivation: spouseDerivation,
           endingBalanceNominal: balanceSpouseNominal,
           endingBalanceReal: balanceSpouseNominal / discountFactor
         },
@@ -199,6 +212,9 @@ function App() {
           employerMatch: userMatch + spouseMatch,
           interestNominal: userInterest + spouseInterest,
           withdrawals: userWithdrawal + spouseWithdrawal,
+          withdrawalDerivation: (userDerivation || spouseDerivation) 
+            ? `${userDerivation}${userDerivation && spouseDerivation ? '\n\n' : ''}${spouseDerivation}${userDerivation && spouseDerivation ? `\n\nTOTAL HOUSEHOLD: $${format(userWithdrawal + spouseWithdrawal)}` : ''}`
+            : undefined,
           endingBalanceNominal: balanceUserNominal + balanceSpouseNominal,
           endingBalanceReal: (balanceUserNominal + balanceSpouseNominal) / discountFactor
         }

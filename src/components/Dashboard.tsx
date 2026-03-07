@@ -1,5 +1,15 @@
 import React from 'react';
-import { Maximize2, Minimize2, Menu } from 'lucide-react';
+import { 
+  Maximize2, 
+  Minimize2, 
+  Menu, 
+  TrendingUp, 
+  Coins, 
+  HandCoins, 
+  CalendarDays,
+  ShieldCheck,
+  ShieldAlert
+} from 'lucide-react';
 import { Charts } from './Charts';
 import { AmortizationTable } from './AmortizationTable';
 import type { AppState, YearData } from '../App';
@@ -11,35 +21,41 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }) => {
-  // Find key metrics
-  const retirementYearUser = data.find(d => d.userAge === state.retireAge);
-  let projectedBalanceNominalAtRetirement = 0;
-  let projectedBalanceRealAtRetirement = 0;
+  // Formatters
+  const formatMil = (v: number) => `$${(v / 1000000).toFixed(2)}M`;
+  const formatNum = (v: number) => `$${Math.round(v).toLocaleString()}`;
 
-  if (retirementYearUser) {
-    projectedBalanceNominalAtRetirement = state.isCombinedView 
-      ? retirementYearUser.combined.startingBalanceNominal 
-      : retirementYearUser.user.startingBalanceNominal;
-      
-    projectedBalanceRealAtRetirement = state.isCombinedView 
-      ? retirementYearUser.combined.startingBalanceReal 
-      : retirementYearUser.user.startingBalanceReal;
-  }
-  
-  const totalContributions = data.reduce((sum, year) => 
-    sum + (state.isCombinedView ? year.combined.contributions : year.user.contributions), 0);
-    
-  const totalEmployerMatch = data.reduce((sum, year) => 
-    sum + (state.isCombinedView ? year.combined.employerMatch : year.user.employerMatch), 0);
+  // Find metrics at retirement
+  const getRetireData = (age: number, type: 'user' | 'spouse') => {
+    const d = data.find(year => (type === 'user' ? year.userAge : year.spouse.age) === age);
+    return d ? d[type] : null;
+  };
 
-  // Calculate Depletion Age
+  const userRetireData = getRetireData(state.retireAge, 'user');
+  const spouseRetireData = getRetireData(state.spouseRetireAge, 'spouse');
+
+  // Totals
+  const totals = data.reduce((acc, year) => ({
+    userCont: acc.userCont + year.user.contributions,
+    spouseCont: acc.spouseCont + year.spouse.contributions,
+    userMatch: acc.userMatch + year.user.employerMatch,
+    spouseMatch: acc.spouseMatch + year.spouse.employerMatch,
+  }), { userCont: 0, spouseCont: 0, userMatch: 0, spouseMatch: 0 });
+
+  // Depletion Age
   const depletionYear = data.find(d => {
     if (state.isCombinedView) return d.combined.endingBalanceNominal === 0 && d.userAge > state.retireAge;
     return d.user.endingBalanceNominal === 0 && d.user.age > state.retireAge;
   });
-  
   const hasMoneyAtEnd = !depletionYear;
   const depletionAge = depletionYear ? (state.isCombinedView ? depletionYear.userAge : depletionYear.user.age) : state.lifeExpectancy;
+
+  // Decadal Highlights (Age 50, 60, 70, 80)
+  const decadalAges = [50, 60, 70, 80];
+  const highlights = decadalAges.map(age => {
+    const year = data.find(d => d.userAge === age);
+    return year ? { age, data: year.combined } : null;
+  }).filter(Boolean);
 
   return (
     <div style={{ flex: 1, padding: 'var(--spacing-2xl)', overflowY: 'auto', position: 'relative' }}>
@@ -53,11 +69,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           </button>
           <div>
             <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Retirement Projection</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>See how your 401k compounding works over time.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Advanced analysis of your cumulative household wealth.</p>
           </div>
         </div>
         
-        {/* Toggles */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.5rem', borderRadius: 'var(--radius-full)' }}>
             <button 
@@ -66,7 +81,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
                 background: !state.isCombinedView ? 'var(--primary)' : 'transparent', 
                 color: !state.isCombinedView ? 'white' : 'var(--text-secondary)',
                 border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600,
-                cursor: 'pointer'
+                cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
               Separate
@@ -77,10 +92,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
                 background: state.isCombinedView ? 'var(--primary)' : 'transparent', 
                 color: state.isCombinedView ? 'white' : 'var(--text-secondary)',
                 border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600,
-                cursor: 'pointer'
+                cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
-              Combined Household
+              Combined
             </button>
           </div>
 
@@ -94,42 +109,94 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
         </div>
       </header>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-2xl)' }}>
+      {/* Primary Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-2xl)' }}>
         
+        {/* Plan Runway */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', borderLeft: hasMoneyAtEnd ? '4px solid var(--accent-1)' : '4px solid var(--danger)' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Plan Runway</p>
-          <div style={{ fontSize: '1.5rem', fontWeight: 600, color: hasMoneyAtEnd ? 'var(--accent-1)' : 'var(--danger)' }}>
-            {hasMoneyAtEnd ? `Fully Funded (Age ${state.lifeExpectancy}+)` : `Depletes at Age ${depletionAge}`}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Plan Runway</p>
+            {hasMoneyAtEnd ? <ShieldCheck size={20} color="var(--accent-1)" /> : <ShieldAlert size={20} color="var(--danger)" />}
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-            {hasMoneyAtEnd ? 'Your money outlasts your life expectancy.' : 'Your money will run out during retirement.'}
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: hasMoneyAtEnd ? 'var(--accent-1)' : 'var(--danger)' }}>
+            {hasMoneyAtEnd ? `Fully Funded` : `Ends at Age ${depletionAge}`}
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+            {hasMoneyAtEnd ? `Your portfolio outlasts your Age ${state.lifeExpectancy} expectancy.` : `Warning: Portfolio depletion occurs before Age ${state.lifeExpectancy}.`}
           </p>
         </div>
 
+        {/* Projected Balance */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', animationDelay: '0.1s' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-            Balance at Primary Retirement
-          </p>
-          <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--primary)' }}>
-            ${projectedBalanceNominalAtRetirement.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Balance at Retirement</p>
+            <TrendingUp size={20} color="var(--primary)" />
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-            ${projectedBalanceRealAtRetirement.toLocaleString(undefined, { maximumFractionDigits: 0 })} in today's money
-          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(userRetireData?.startingBalanceNominal || 0)}</div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(userRetireData?.startingBalanceReal || 0)} Real</p>
+            </div>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(spouseRetireData?.startingBalanceNominal || 0)}</div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(spouseRetireData?.startingBalanceReal || 0)} Real</p>
+            </div>
+          </div>
         </div>
         
+        {/* Total Contributions */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', animationDelay: '0.2s' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Contributions {state.isCombinedView ? '(Both)' : '(Primary)'}</p>
-          <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>
-            ${totalContributions.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Lifetime Contributions</p>
+            <Coins size={20} color="var(--accent-1)" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.userCont)}</div>
+            </div>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseCont)}</div>
+            </div>
           </div>
         </div>
         
+        {/* Employer Match */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', animationDelay: '0.3s' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Total Employer Match {state.isCombinedView ? '(Both)' : '(Primary)'}</p>
-          <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>
-            ${totalEmployerMatch.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Total Employer Match</p>
+            <HandCoins size={20} color="var(--accent-2)" />
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.userMatch)}</div>
+            </div>
+            <div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseMatch)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Decadal Snapshots */}
+      <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-2xl)', animationDelay: '0.4s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <CalendarDays size={20} color="var(--primary)" />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Decadal Wealth Milestones (Combined)</h3>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
+          {highlights.map((h, idx) => (
+            <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+              <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Age {h?.age}</p>
+              <div style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.25rem' }}>{formatMil(h?.data.startingBalanceNominal || 0)}</div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatMil(h?.data.startingBalanceReal || 0)} Real Value</p>
+            </div>
+          ))}
         </div>
       </div>
 
