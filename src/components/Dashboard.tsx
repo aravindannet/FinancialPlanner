@@ -17,13 +17,16 @@ import type { AppState, YearData } from '../App';
 interface DashboardProps {
   data: YearData[];
   state: AppState;
-  updateState: (key: keyof AppState, value: number | boolean) => void;
+  updateState: (key: keyof AppState, value: any) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }) => {
   // Formatters
-  const formatMil = (v: number) => `$${(v / 1000000).toFixed(2)}M`;
-  const formatNum = (v: number) => `$${Math.round(v).toLocaleString()}`;
+  const formatCurrency = (v: number) => {
+    if (Math.abs(v) >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
+    if (Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(0)}K`;
+    return `$${Math.round(v).toLocaleString()}`;
+  };
 
   // Find metrics at retirement
   const getRetireData = (age: number, type: 'user' | 'spouse') => {
@@ -58,22 +61,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
   }).filter(Boolean);
 
   return (
-    <div style={{ flex: 1, padding: 'var(--spacing-2xl)', overflowY: 'auto', position: 'relative' }}>
+    <div className="dashboard-container">
       <header style={{ marginBottom: 'var(--spacing-2xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <button 
             onClick={() => updateState('isSidebarOpen', !state.isSidebarOpen)} 
             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '0.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--text-primary)' }}
           >
             <Menu size={20} />
           </button>
-          <div>
-            <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Retirement Projection</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Advanced analysis of your cumulative household wealth.</p>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/logo.png" alt="Aura Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, #fff, var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
+                Retirement Projection
+              </h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Advanced analysis of your cumulative household wealth.</p>
+            </div>
           </div>
         </div>
         
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {state.hasSpouse && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.5rem', borderRadius: 'var(--radius-full)' }}>
               <button 
@@ -137,14 +148,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           <div style={{ display: 'grid', gridTemplateColumns: state.hasSpouse ? '1fr 1fr' : '1fr', gap: '1rem' }}>
             <div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(userRetireData?.startingBalanceNominal || 0)}</div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(userRetireData?.startingBalanceReal || 0)} Real</p>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(userRetireData?.startingBalanceNominal || 0)}</div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatCurrency(userRetireData?.startingBalanceReal || 0)} Real</p>
             </div>
             {state.hasSpouse && (
               <div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(spouseRetireData?.startingBalanceNominal || 0)}</div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(spouseRetireData?.startingBalanceReal || 0)} Real</p>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(spouseRetireData?.startingBalanceNominal || 0)}</div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatCurrency(spouseRetireData?.startingBalanceReal || 0)} Real</p>
               </div>
             )}
           </div>
@@ -159,12 +170,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           <div style={{ display: 'grid', gridTemplateColumns: state.hasSpouse ? '1fr 1fr' : '1fr', gap: '1rem' }}>
             <div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.userCont)}</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(totals.userCont)}</div>
             </div>
             {state.hasSpouse && (
               <div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseCont)}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(totals.spouseCont)}</div>
               </div>
             )}
           </div>
@@ -179,12 +190,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           <div style={{ display: 'grid', gridTemplateColumns: state.hasSpouse ? '1fr 1fr' : '1fr', gap: '1rem' }}>
             <div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.userMatch)}</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(totals.userMatch)}</div>
             </div>
             {state.hasSpouse && (
               <div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseMatch)}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(totals.spouseMatch)}</div>
               </div>
             )}
           </div>
@@ -201,8 +212,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           {highlights.map((h, idx) => (
             <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
               <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Age {h?.age}</p>
-              <div style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.25rem' }}>{formatMil(h?.data.startingBalanceNominal || 0)}</div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatMil(h?.data.startingBalanceReal || 0)} Real Value</p>
+              <div style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.25rem' }}>{formatCurrency(h?.data.startingBalanceNominal || 0)}</div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatCurrency(h?.data.startingBalanceReal || 0)} Real Value</p>
             </div>
           ))}
         </div>

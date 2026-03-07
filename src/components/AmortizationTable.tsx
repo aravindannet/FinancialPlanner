@@ -68,11 +68,11 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
 
   if (!state.hasSpouse || state.isCombinedView) {
     return (
-      <div className="glass-panel" style={{ marginTop: 'var(--spacing-xl)', padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%' }}>
-        <h3 style={{ marginBottom: 'var(--spacing-md)' }}>
+      <div className="glass-panel" style={{ marginTop: 'var(--spacing-xl)', padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%', minHeight: '600px', flexShrink: 0 }}>
+        <h3 style={{ marginBottom: 'var(--spacing-md)', fontSize: '1.25rem' }}>
           Yearly Breakdown {state.hasSpouse ? '(Household Total)' : '(Primary Only)'}
         </h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
           {renderTableHead()}
           <tbody>
             {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'combined', 'transparent')}</React.Fragment>)}
@@ -83,10 +83,10 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-xl)', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-xl)', width: '100%', minHeight: '600px', flexShrink: 0 }}>
       <div className="glass-panel" style={{ padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%' }}>
-        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--primary)' }}>Primary Breakdown</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap' }}>
+        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--primary)', fontSize: '1.25rem' }}>Primary Breakdown</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
           {renderTableHead()}
           <tbody>
             {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'user', 'rgba(59, 130, 246, 0.05)')}</React.Fragment>)}
@@ -95,8 +95,8 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
       </div>
       
       <div className="glass-panel" style={{ padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%' }}>
-        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--accent-1)' }}>Spouse Breakdown</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap' }}>
+        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--accent-1)', fontSize: '1.25rem' }}>Spouse Breakdown</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
           {renderTableHead()}
           <tbody>
             {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'spouse', 'rgba(16, 185, 129, 0.05)')}</React.Fragment>)}

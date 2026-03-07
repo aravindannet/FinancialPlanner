@@ -205,8 +205,18 @@ button.primary:hover {
 .main-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   overflow: hidden;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.dashboard-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--spacing-2xl);
   position: relative;
 }
 

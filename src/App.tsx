@@ -42,6 +42,7 @@ export interface AppState {
   isCombinedView: boolean;
   isSidebarOpen: boolean;
   isFullScreenDashboard: boolean;
+  chartType: 'growth' | 'annual';
 }
 
 export interface PersonYearData {
@@ -77,7 +78,7 @@ function App() {
     userMatchTier2Pct: 50,
     userMatchTier2Max: 2,
 
-    spouseAge: 30,
+    spouseAge: 32,
     spouseRetireAge: 65,
     spouseIncome: 80000,
     spouseContribution: 8000,
@@ -98,11 +99,12 @@ function App() {
     taxRate: 15,
     enableStressTest: false,
     isCombinedView: true,
-    isSidebarOpen: false,
+    isSidebarOpen: true,
     isFullScreenDashboard: false,
+    chartType: 'growth',
   });
 
-  const updateState = (key: keyof AppState, value: number | boolean) => {
+  const updateState = (key: keyof AppState, value: any) => {
     setState(prev => ({ ...prev, [key]: value }));
   };
 
@@ -115,167 +117,124 @@ function App() {
     const nominalRate = state.expectedReturn / 100;
     const inflationRate = state.inflation / 100;
 
-    const maxYearsToLive = state.lifeExpectancy - Math.min(state.userAge, state.spouseAge);
+    for (let yearIdx = 0; yearIdx <= (state.lifeExpectancy - state.userAge); yearIdx++) {
+      const currentAgeUser = state.userAge + yearIdx;
+      const currentAgeSpouse = state.spouseAge + yearIdx;
+      const cumulativeInflation = Math.pow(1 + inflationRate, yearIdx);
 
-    for (let i = 0; i <= maxYearsToLive; i++) {
-      const currentUserAge = state.userAge + i;
-      const currentSpouseAge = state.spouseAge + i;
-      
-      const isUserRetired = currentUserAge >= state.retireAge;
-      const isSpouseRetired = currentSpouseAge >= state.spouseRetireAge;
+      // --- USER CALCULATIONS ---
+      let userCont = 0;
+      let userMatch = 0;
+      if (currentAgeUser < state.retireAge) {
+        userCont = Math.min(state.userContribution, 23000); 
+        // Tiered Match User
+        const tier1Match = Math.min(state.userIncome * (state.userMatchTier1Max / 100), userCont) * (state.userMatchTier1Pct / 100);
+        const userContAboveTier1 = Math.max(0, userCont - (state.userIncome * (state.userMatchTier1Max / 100)));
+        const tier2Match = Math.min(state.userIncome * (state.userMatchTier2Max / 100), userContAboveTier1) * (state.userMatchTier2Pct / 100);
+        userMatch = tier1Match + tier2Match;
+      }
 
-      // IRS Limits Logic (2024/2025 approx)
-      const maxUserCont = currentUserAge >= 50 ? 31000 : 23500;
-      const maxSpouseCont = currentSpouseAge >= 50 ? 31000 : 23500;
+      // --- SPOUSE CALCULATIONS ---
+      let spouseCont = 0;
+      let spouseMatch = 0;
+      if (state.hasSpouse && currentAgeSpouse < state.spouseRetireAge) {
+        spouseCont = Math.min(state.spouseContribution, 23000);
+        // Tiered Match Spouse
+        const tier1MatchS = Math.min(state.spouseIncome * (state.spouseMatchTier1Max / 100), spouseCont) * (state.spouseMatchTier1Pct / 100);
+        const spouseContAboveTier1 = Math.max(0, spouseCont - (state.spouseIncome * (state.spouseMatchTier1Max / 100)));
+        const tier2MatchS = Math.min(state.spouseIncome * (state.spouseMatchTier2Max / 100), spouseContAboveTier1) * (state.spouseMatchTier2Pct / 100);
+        spouseMatch = tier1MatchS + tier2MatchS;
+      }
 
-      const actualUserCont = isUserRetired ? 0 : Math.min(state.userContribution, maxUserCont);
-      const actualSpouseCont = (isSpouseRetired || !state.hasSpouse) ? 0 : Math.min(state.spouseContribution, maxSpouseCont);
+      // Interest
+      const userInterest = (balanceUserNominal + userCont + userMatch) * nominalRate;
+      const spouseInterest = state.hasSpouse ? (balanceSpouseNominal + spouseCont + spouseMatch) * nominalRate : 0;
 
-      // Tiered Match Helper
-      const calcMatch = (income: number, contrib: number, t1P: number, t1M: number, t2P: number, t2M: number) => {
-        if (income <= 0 || contrib <= 0) return 0;
-        const contribPct = (contrib / income) * 100;
-        const matchT1Pct = Math.min(contribPct, t1M);
-        const matchT1Amt = (matchT1Pct / 100) * (t1P / 100) * income;
-        let matchT2Amt = 0;
-        if (contribPct > t1M) {
-          const matchT2Pct = Math.min(contribPct - t1M, t2M);
-          matchT2Amt = (matchT2Pct / 100) * (t2P / 100) * income;
-        }
-        return matchT1Amt + matchT2Amt;
-      };
-
-      const userMatch = isUserRetired ? 0 : calcMatch(state.userIncome, state.userContribution, state.userMatchTier1Pct, state.userMatchTier1Max, state.userMatchTier2Pct, state.userMatchTier2Max);
-      const spouseMatch = (isSpouseRetired || !state.hasSpouse) ? 0 : calcMatch(state.spouseIncome, state.spouseContribution, state.spouseMatchTier1Pct, state.spouseMatchTier1Max, state.spouseMatchTier2Pct, state.spouseMatchTier2Max);
-
-      // Discount factor for inflation (determines how much more nominal $ is needed to buy the same real goods)
-      const inflationMultiplier = Math.pow(1 + inflationRate, i);
-
-      // Effective tax rate logic (gross up the withdrawal to cover taxes)
-      const taxMultiplier = 1 / (1 - state.taxRate / 100);
-      
-      // Social Security offsets
-      const annualSSUser = state.socialSecurityUser * 12;
-      const annualSSSpouse = state.socialSecuritySpouse * 12;
-
-      // Withdrawals: Inflate the user's input so their *real* net purchasing power stays flat.
+      // Withdrawals
       let userWithdrawal = 0;
-      let userDerivation = "";
       let spouseWithdrawal = 0;
+      let combinedWithdrawal = 0;
+      let userDerivation = "";
       let spouseDerivation = "";
-      
-      const format = (v: number) => Math.round(v).toLocaleString();
+      let combinedDerivation = "";
 
-      if (isUserRetired) {
-        const netAfterSS = Math.max(0, state.userWithdrawalRate - annualSSUser);
-        const inflated = netAfterSS * inflationMultiplier;
-        const grossed = inflated * taxMultiplier;
-        userWithdrawal = Math.min(balanceUserNominal, grossed);
-        
-        userDerivation = `PRIMARY:\n1. Target Lifestyle: $${format(state.userWithdrawalRate)}\n2. Minus Social Security: -$${format(annualSSUser)}\n3. Net Need (Today's $): $${format(netAfterSS)}\n4. Adjusted for Inflation (${inflationMultiplier.toFixed(2)}x): $${format(inflated)}\n5. Grossed up for ${state.taxRate}% Tax: $${format(grossed)}`;
-        if (userWithdrawal < grossed) userDerivation += `\n⚠️ Capped by Balance`;
-      }
-      
-      if (isSpouseRetired && state.hasSpouse) {
-        const netAfterSS = Math.max(0, state.spouseWithdrawalRate - annualSSSpouse);
-        const inflated = netAfterSS * inflationMultiplier;
-        const grossed = inflated * taxMultiplier;
-        spouseWithdrawal = Math.min(balanceSpouseNominal, grossed);
-
-        spouseDerivation = `SPOUSE:\n1. Target Lifestyle: $${format(state.spouseWithdrawalRate)}\n2. Minus Social Security: -$${format(annualSSSpouse)}\n3. Net Need (Today's $): $${format(netAfterSS)}\n4. Adjusted for Inflation (${inflationMultiplier.toFixed(2)}x): $${format(inflated)}\n5. Grossed up for ${state.taxRate}% Tax: $${format(grossed)}`;
-        if (spouseWithdrawal < grossed) spouseDerivation += `\n⚠️ Capped by Balance`;
+      if (currentAgeUser >= state.retireAge) {
+        const netNeed = Math.max(0, state.userWithdrawalRate - (state.socialSecurityUser * 12));
+        const inflationAdjusted = netNeed * cumulativeInflation;
+        userWithdrawal = inflationAdjusted / (1 - (state.taxRate / 100));
+        userDerivation = `PRIMARY:\n• Target: $${state.userWithdrawalRate.toLocaleString()}\n• SS Offset: -$${(state.socialSecurityUser*12).toLocaleString()}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(userWithdrawal).toLocaleString()}`;
+        combinedWithdrawal += userWithdrawal;
       }
 
-      // Check Stress Test (-30% in first 2 years of retirement)
-      const userYearsRetired = currentUserAge - state.retireAge;
-      const spouseYearsRetired = currentSpouseAge - state.spouseRetireAge;
-      const userIsStressed = state.enableStressTest && userYearsRetired >= 0 && userYearsRetired < 2;
-      const spouseIsStressed = state.enableStressTest && spouseYearsRetired >= 0 && spouseYearsRetired < 2;
-      
-      const userRate = userIsStressed ? -0.30 : nominalRate;
-      const spouseRate = spouseIsStressed ? -0.30 : nominalRate;
-
-      // User calculations
-      const userStart = balanceUserNominal;
-      const userBase = balanceUserNominal + actualUserCont + userMatch - userWithdrawal;
-      const userInterest = userBase > 0 ? userBase * userRate : 0;
-      balanceUserNominal = Math.max(0, userBase + userInterest);
-
-      // Spouse calculations
-      const spouseStart = state.hasSpouse ? balanceSpouseNominal : 0;
-      let spouseInterest = 0;
-      if (state.hasSpouse) {
-        const spouseBase = balanceSpouseNominal + actualSpouseCont + spouseMatch - spouseWithdrawal;
-        spouseInterest = spouseBase > 0 ? spouseBase * spouseRate : 0;
-        balanceSpouseNominal = Math.max(0, spouseBase + spouseInterest);
-      } else {
-        balanceSpouseNominal = 0;
+      if (state.hasSpouse && currentAgeSpouse >= state.spouseRetireAge) {
+        const netNeed = Math.max(0, state.spouseWithdrawalRate - (state.socialSecuritySpouse * 12));
+        const inflationAdjusted = netNeed * cumulativeInflation;
+        spouseWithdrawal = inflationAdjusted / (1 - (state.taxRate / 100));
+        spouseDerivation = `SPOUSE:\n• Target: $${state.spouseWithdrawalRate.toLocaleString()}\n• SS Offset: -$${(state.socialSecuritySpouse*12).toLocaleString()}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(spouseWithdrawal).toLocaleString()}`;
+        combinedWithdrawal += spouseWithdrawal;
       }
 
-      const combinedWithdrawal = userWithdrawal + (state.hasSpouse ? spouseWithdrawal : 0);
-      const combinedDerivation = userDerivation + (state.hasSpouse ? ("\n\n" + spouseDerivation + `\n\nTOTAL HOUSEHOLD: $${format(userWithdrawal + spouseWithdrawal)}`) : "");
+      if (combinedWithdrawal > 0) {
+        combinedDerivation = `${userDerivation}${userDerivation && spouseDerivation ? '\n\n' : ''}${spouseDerivation}\n\nTOTAL HOUSEHOLD: $${Math.round(combinedWithdrawal).toLocaleString()}`;
+      }
 
-      // Discount factor for Real Values
-      const discountFactor = inflationMultiplier;
+      const startingUser = balanceUserNominal;
+      const startingSpouse = balanceSpouseNominal;
+
+      balanceUserNominal = Math.max(0, balanceUserNominal + userCont + userMatch + userInterest - userWithdrawal);
+      balanceSpouseNominal = state.hasSpouse ? Math.max(0, balanceSpouseNominal + spouseCont + spouseMatch + spouseInterest - spouseWithdrawal) : 0;
 
       data.push({
-        yearIndex: i,
-        userAge: currentUserAge,
+        yearIndex: yearIdx,
+        userAge: currentAgeUser,
         user: {
-          age: currentUserAge,
-          startingBalanceNominal: userStart,
-          startingBalanceReal: userStart / discountFactor,
-          contributions: actualUserCont,
+          age: currentAgeUser,
+          startingBalanceNominal: startingUser,
+          startingBalanceReal: startingUser / cumulativeInflation,
+          contributions: userCont,
           employerMatch: userMatch,
           interestNominal: userInterest,
           withdrawals: userWithdrawal,
           withdrawalDerivation: userDerivation,
           endingBalanceNominal: balanceUserNominal,
-          endingBalanceReal: balanceUserNominal / discountFactor
+          endingBalanceReal: balanceUserNominal / cumulativeInflation,
         },
         spouse: {
-          age: currentSpouseAge,
-          startingBalanceNominal: spouseStart,
-          startingBalanceReal: spouseStart / discountFactor,
-          contributions: actualSpouseCont,
+          age: currentAgeSpouse,
+          startingBalanceNominal: startingSpouse,
+          startingBalanceReal: startingSpouse / cumulativeInflation,
+          contributions: spouseCont,
           employerMatch: spouseMatch,
           interestNominal: spouseInterest,
           withdrawals: spouseWithdrawal,
           withdrawalDerivation: spouseDerivation,
           endingBalanceNominal: balanceSpouseNominal,
-          endingBalanceReal: balanceSpouseNominal / discountFactor
+          endingBalanceReal: balanceSpouseNominal / cumulativeInflation,
         },
         combined: {
-          startingBalanceNominal: userStart + spouseStart,
-          startingBalanceReal: (userStart + spouseStart) / discountFactor,
-          contributions: actualUserCont + actualSpouseCont,
+          startingBalanceNominal: startingUser + startingSpouse,
+          startingBalanceReal: (startingUser + startingSpouse) / cumulativeInflation,
+          contributions: userCont + spouseCont,
           employerMatch: userMatch + spouseMatch,
           interestNominal: userInterest + spouseInterest,
           withdrawals: combinedWithdrawal,
           withdrawalDerivation: combinedDerivation,
           endingBalanceNominal: balanceUserNominal + balanceSpouseNominal,
-          endingBalanceReal: (balanceUserNominal + balanceSpouseNominal) / discountFactor
+          endingBalanceReal: (balanceUserNominal + balanceSpouseNominal) / cumulativeInflation,
         }
       });
     }
-    
     return data;
   }, [state]);
 
   return (
-    <div className="app-container" style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-      <div className="bg-orb bg-orb-1"></div>
-      <div className="bg-orb bg-orb-2"></div>
-      
-      {state.isSidebarOpen && <Sidebar state={state} updateState={updateState} />}
-      
-      {!state.isFullScreenDashboard && (
-        <InputPanel state={state} updateState={updateState} />
-      )}
-      
-      <Dashboard data={projectionData} state={state} updateState={updateState} />
-      
-      <ChatInterface state={state} updateState={updateState} data={projectionData} />
+    <div className="app-container">
+      <Sidebar isOpen={state.isSidebarOpen} state={state} updateState={updateState} />
+      <div className={`main-content ${!state.isSidebarOpen ? 'sidebar-closed' : ''}`}>
+        {!state.isFullScreenDashboard && <InputPanel state={state} updateState={updateState} />}
+        <Dashboard data={projectionData} state={state} updateState={updateState} />
+      </div>
+      <ChatInterface state={state} data={projectionData} updateState={updateState} />
     </div>
   );
 }
