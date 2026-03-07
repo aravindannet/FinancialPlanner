@@ -52,11 +52,67 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="500000" step="5000" value={state.userIncome} onChange={(e) => updateState('userIncome', Number(e.target.value))} />
         </div>
         <div className="input-group">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
+            <label className="input-label" style={{ margin: 0 }}>
+              Annual Contribution <span className="value">{state.userContributionType === 'percent' ? `${state.userContribution}%` : `$${state.userContribution.toLocaleString()}`}</span>
+              <InfoTooltip align="right" text="Your annual deposit. Can be specified as a flat dollar amount or a percentage of your salary." />
+            </label>
+            <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+              {['dollar', 'percent'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => updateState('userContributionType', type as any)}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: '0.65rem',
+                    border: 'none',
+                    borderRadius: '4px',
+                    background: state.userContributionType === type ? 'var(--primary)' : 'transparent',
+                    color: state.userContributionType === type ? 'white' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  {type === 'dollar' ? '$' : '%'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max={state.userContributionType === 'percent' ? 100 : 70000} 
+            step={state.userContributionType === 'percent' ? 1 : 500} 
+            value={state.userContribution} 
+            onChange={(e) => updateState('userContribution', Number(e.target.value))} 
+          />
+        </div>
+
+        <div className="input-group">
           <label className="input-label">
-            Annual Contribution <span className="value">${state.userContribution.toLocaleString()}</span>
-            <InfoTooltip align="right" text="Your annual 401k contribution." />
+            Annual Salary Increase <span className="value">{state.salaryGrowthUser}%</span>
+            <InfoTooltip align="right" text="Optional. Expected annual percentage growth of your salary. Note: This compounds your income but does not automatically adjust IRS contribution limits unless you change them." />
           </label>
-          <input type="range" min="0" max="69000" step="500" value={state.userContribution} onChange={(e) => updateState('userContribution', Number(e.target.value))} />
+          <input type="range" min="0" max="15" step="0.5" value={state.salaryGrowthUser} onChange={(e) => updateState('salaryGrowthUser', Number(e.target.value))} />
+        </div>
+
+        <div style={{ marginTop: 'var(--spacing-md)', background: 'rgba(255,255,255,0.01)', padding: 'var(--spacing-sm)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary)', marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            Catch-up Contributions
+            <InfoTooltip align="right" text="IRS allowed additional deposits for older participants. (Example 2026: $8,000 for age 50+, $11,250 for age 60-63)." />
+          </p>
+          <div className="input-group">
+            <label className="input-label" style={{ fontSize: '0.7rem' }}>
+              Age 50 - 59 <span className="value">${state.catchUp50User.toLocaleString()}</span>
+            </label>
+            <input type="range" min="0" max="15000" step="250" value={state.catchUp50User} onChange={(e) => updateState('catchUp50User', Number(e.target.value))} />
+          </div>
+          <div className="input-group">
+            <label className="input-label" style={{ fontSize: '0.7rem' }}>
+              Age 60+ <span className="value">${state.catchUp60User.toLocaleString()}</span>
+            </label>
+            <input type="range" min="0" max="20000" step="250" value={state.catchUp60User} onChange={(e) => updateState('catchUp60User', Number(e.target.value))} />
+          </div>
         </div>
         <div className="input-group" style={{ marginBottom: 'var(--spacing-md)' }}>
           <label className="input-label" style={{ marginBottom: '0.5rem' }}>
@@ -116,11 +172,67 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="500000" step="5000" value={state.spouseIncome} onChange={(e) => updateState('spouseIncome', Number(e.target.value))} />
         </div>
         <div className="input-group">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
+            <label className="input-label" style={{ margin: 0 }}>
+              Annual Contribution <span className="value">{state.spouseContributionType === 'percent' ? `${state.spouseContribution}%` : `$${state.spouseContribution.toLocaleString()}`}</span>
+              <InfoTooltip align="right" text="Spouse's annual deposit. Can be specified as a flat dollar amount or a percentage of salary." />
+            </label>
+            <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+              {['dollar', 'percent'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => updateState('spouseContributionType', type as any)}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: '0.65rem',
+                    border: 'none',
+                    borderRadius: '4px',
+                    background: state.spouseContributionType === type ? 'var(--accent-2)' : 'transparent',
+                    color: state.spouseContributionType === type ? 'white' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  {type === 'dollar' ? '$' : '%'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max={state.spouseContributionType === 'percent' ? 100 : 70000} 
+            step={state.spouseContributionType === 'percent' ? 1 : 500} 
+            value={state.spouseContribution} 
+            onChange={(e) => updateState('spouseContribution', Number(e.target.value))} 
+          />
+        </div>
+
+        <div className="input-group">
           <label className="input-label">
-            Annual Contribution <span className="value">${state.spouseContribution.toLocaleString()}</span>
-            <InfoTooltip align="right" text="Spouse's annual deposit." />
+            Annual Salary Increase <span className="value">{state.salaryGrowthSpouse}%</span>
+            <InfoTooltip align="right" text="Optional. Expected annual percentage growth of spouse's salary." />
           </label>
-          <input type="range" min="0" max="69000" step="500" value={state.spouseContribution} onChange={(e) => updateState('spouseContribution', Number(e.target.value))} />
+          <input type="range" min="0" max="15" step="0.5" value={state.salaryGrowthSpouse} onChange={(e) => updateState('salaryGrowthSpouse', Number(e.target.value))} />
+        </div>
+
+        <div style={{ marginTop: 'var(--spacing-md)', background: 'rgba(255,255,255,0.01)', padding: 'var(--spacing-sm)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--accent-2)', marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            Catch-up Contributions
+            <InfoTooltip align="right" text="IRS additional deposits for spouse." />
+          </p>
+          <div className="input-group">
+            <label className="input-label" style={{ fontSize: '0.7rem' }}>
+              Age 50 - 59 <span className="value">${state.catchUp50Spouse.toLocaleString()}</span>
+            </label>
+            <input type="range" min="0" max="15000" step="250" value={state.catchUp50Spouse} onChange={(e) => updateState('catchUp50Spouse', Number(e.target.value))} />
+          </div>
+          <div className="input-group">
+            <label className="input-label" style={{ fontSize: '0.7rem' }}>
+              Age 60+ <span className="value">${state.catchUp60Spouse.toLocaleString()}</span>
+            </label>
+            <input type="range" min="0" max="20000" step="250" value={state.catchUp60Spouse} onChange={(e) => updateState('catchUp60Spouse', Number(e.target.value))} />
+          </div>
         </div>
         <div className="input-group" style={{ marginBottom: 'var(--spacing-md)' }}>
           <label className="input-label" style={{ marginBottom: '0.5rem' }}>
@@ -245,47 +357,62 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="50" step="1" value={state.taxRate} onChange={(e) => updateState('taxRate', Number(e.target.value))} />
         </div>
 
-        {state.retireAge < 60 && (
-          <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-sm)', background: 'rgba(239, 68, 68, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--danger)', marginBottom: 'var(--spacing-sm)', fontWeight: 700 }}>Early Wealth Controls</h4>
-            
-            <div className="input-group">
-              <label className="input-label">
-                Begin Withdrawals at Age <span className="value">Age {state.withdrawalStartAge}</span>
-                <InfoTooltip align="right" text="Defer withdrawals until age 60+ to avoid the 10% penalty, even if retiring early." />
-              </label>
-              <input type="range" min={state.retireAge} max="70" value={state.withdrawalStartAge} onChange={(e) => updateState('withdrawalStartAge', Number(e.target.value))} />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input 
-                type="checkbox" 
-                id="applyPenalty" 
-                checked={state.applyEarlyPenalty} 
-                onChange={(e) => updateState('applyEarlyPenalty', e.target.checked)} 
-                style={{ cursor: 'pointer' }}
-              />
-              <label htmlFor="applyPenalty" style={{ cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                Apply 10% Early Withdrawal Penalty
-                <InfoTooltip align="right" text="IRS Penalty for non-qualified withdrawals before age 59½." />
-              </label>
-            </div>
+        <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-sm)', background: 'rgba(239, 68, 68, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <h4 style={{ fontSize: '0.85rem', color: 'var(--danger)', marginBottom: 'var(--spacing-sm)', fontWeight: 700 }}>Wealth Controls</h4>
+          
+          <div className="input-group">
+            <label className="input-label">
+              Begin Withdrawals at Age <span className="value">Age {state.withdrawalStartAge}</span>
+              <InfoTooltip align="right" text="Option to defer withdrawals until a specific age, even if retiring earlier. Defaults to 60." />
+            </label>
+            <input type="range" min={Math.min(state.retireAge, state.spouseRetireAge)} max="70" value={state.withdrawalStartAge} onChange={(e) => updateState('withdrawalStartAge', Number(e.target.value))} />
           </div>
-        )}
 
-        <div style={{ marginTop: 'var(--spacing-md)', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <input 
               type="checkbox" 
-              id="stressTest" 
-              checked={state.enableStressTest} 
-              onChange={(e) => updateState('enableStressTest', e.target.checked)} 
-              style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+              id="applyPenalty" 
+              checked={state.applyEarlyPenalty} 
+              onChange={(e) => updateState('applyEarlyPenalty', e.target.checked)} 
+              style={{ cursor: 'pointer' }}
             />
-            <label htmlFor="stressTest" style={{ cursor: 'pointer', fontSize: '0.875rem', color: 'var(--danger)', fontWeight: 600 }}>
-              Simulate 2008 Crash
-              <InfoTooltip align="right" text="Applies a -37% return in Month 1 of Year 1 to stress test plan resilience." />
+            <label htmlFor="applyPenalty" style={{ cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+              Apply 10% Early Withdrawal Penalty
+              <InfoTooltip align="right" text="IRS Penalty for non-qualified withdrawals before age 59½." />
             </label>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 'var(--spacing-md)', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)' }}>
+          <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 'var(--spacing-xs)' }}>
+              <input 
+                type="checkbox" 
+                id="stressTest" 
+                checked={state.enableStressTest} 
+                onChange={(e) => updateState('enableStressTest', e.target.checked)} 
+                style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+              />
+              <label htmlFor="stressTest" style={{ cursor: 'pointer', fontSize: '0.875rem', color: 'var(--danger)', fontWeight: 600 }}>
+                Simulate 2008 Crash
+                <InfoTooltip align="right" text="Target a specific year for a -37% return crash simulation." />
+              </label>
+            </div>
+            
+            {state.enableStressTest && (
+              <div className="input-group" style={{ paddingLeft: '22px' }}>
+                <label className="input-label" style={{ fontSize: '0.7rem' }}>
+                  Crash at Age <span className="value">{state.stressTestAge}</span>
+                </label>
+                <input 
+                  type="range" 
+                  min={state.userAge} 
+                  max={state.lifeExpectancy} 
+                  value={state.stressTestAge} 
+                  onChange={(e) => updateState('stressTestAge', Number(e.target.value))} 
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

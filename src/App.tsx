@@ -10,23 +10,30 @@ export interface AppState {
   retireAge: number;
   userIncome: number;
   userContribution: number;
+  userContributionType: 'dollar' | 'percent';
+  userMatchTier1Pct: number;
+  userMatchTier1Max: number;
+  userMatchTier2Pct: number;
+  userMatchTier2Max: number;
+  salaryGrowthUser: number;
+  catchUp50User: number;
+  catchUp60User: number;
   currentBalanceUser: number;
 
   spouseAge: number;
   spouseRetireAge: number;
   spouseIncome: number;
   spouseContribution: number;
+  spouseContributionType: 'dollar' | 'percent';
   spouseMatchTier1Pct: number;
   spouseMatchTier1Max: number;
   spouseMatchTier2Pct: number;
   spouseMatchTier2Max: number;
+  salaryGrowthSpouse: number;
+  catchUp50Spouse: number;
+  catchUp60Spouse: number;
   currentBalanceSpouse: number;
   hasSpouse: boolean;
-
-  userMatchTier1Pct: number;
-  userMatchTier1Max: number;
-  userMatchTier2Pct: number;
-  userMatchTier2Max: number;
 
   lifeExpectancy: number;
   expectedReturn: number;
@@ -40,6 +47,7 @@ export interface AppState {
   ssStartAgeSpouse: 62 | 67 | 70;
   taxRate: number; // Percentage
   enableStressTest: boolean;
+  stressTestAge: number;
   applyEarlyPenalty: boolean;
   withdrawalStartAge: number;
 
@@ -76,22 +84,30 @@ function App() {
   const [state, setState] = useState<AppState>({
     userAge: 30,
     retireAge: 65,
-    userIncome: 100000,
-    userContribution: 10000,
-    currentBalanceUser: 50000,
+    userIncome: 120000,
+    userContribution: 23500,
+    userContributionType: 'dollar',
     userMatchTier1Pct: 100,
     userMatchTier1Max: 3,
     userMatchTier2Pct: 50,
     userMatchTier2Max: 2,
+    salaryGrowthUser: 3,
+    catchUp50User: 0,
+    catchUp60User: 0,
+    currentBalanceUser: 50000,
 
-    spouseAge: 32,
+    spouseAge: 38,
     spouseRetireAge: 65,
-    spouseIncome: 80000,
-    spouseContribution: 8000,
+    spouseIncome: 85000,
+    spouseContribution: 15000,
+    spouseContributionType: 'dollar',
     spouseMatchTier1Pct: 100,
     spouseMatchTier1Max: 3,
     spouseMatchTier2Pct: 50,
     spouseMatchTier2Max: 2,
+    salaryGrowthSpouse: 3,
+    catchUp50Spouse: 0,
+    catchUp60Spouse: 0,
     currentBalanceSpouse: 30000,
     hasSpouse: true,
 
@@ -113,7 +129,8 @@ function App() {
     contributionModel: 'mid-year',
     theme: 'dark',
     applyEarlyPenalty: false,
-    withdrawalStartAge: 65,
+    withdrawalStartAge: 60,
+    stressTestAge: 65,
   });
 
   useEffect(() => {
@@ -138,31 +155,61 @@ function App() {
       const currentAgeSpouse = state.spouseAge + yearIdx;
       const cumulativeInflation = Math.pow(1 + inflationRate, yearIdx);
 
-      // Apply Stress Test (2008 Crash: -37% in Year 1)
-      const yearlyReturn = (state.enableStressTest && yearIdx === 0) ? -0.37 : nominalRate;
+      // Compounded Income
+      const currentIncomeUser = state.userIncome * Math.pow(1 + (state.salaryGrowthUser/100), yearIdx);
+      const currentIncomeSpouse = state.spouseIncome * Math.pow(1 + (state.salaryGrowthSpouse/100), yearIdx);
+
+      // Apply Stress Test to return
+      const yearlyReturn = (state.enableStressTest && currentAgeUser === state.stressTestAge) ? -0.37 : nominalRate;
 
       // --- USER CALCULATIONS ---
       let userCont = 0;
       let userMatch = 0;
       if (currentAgeUser < state.retireAge) {
-        userCont = Math.min(state.userContribution, 24500); 
-        // Tiered Match User
-        const tier1Match = Math.min(state.userIncome * (state.userMatchTier1Max / 100), userCont) * (state.userMatchTier1Pct / 100);
-        const userContAboveTier1 = Math.max(0, userCont - (state.userIncome * (state.userMatchTier1Max / 100)));
-        const tier2Match = Math.min(state.userIncome * (state.userMatchTier2Max / 100), userContAboveTier1) * (state.userMatchTier2Pct / 100);
-        userMatch = tier1Match + tier2Match;
+        // Base Contribution
+        const baseCont = state.userContributionType === 'dollar' 
+          ? state.userContribution 
+          : (currentIncomeUser * (state.userContribution / 100));
+        
+        // Catch-up
+        let catchUp = 0;
+        if (currentAgeUser >= 60) {
+          catchUp = state.catchUp60User;
+        } else if (currentAgeUser >= 50) {
+          catchUp = state.catchUp50User;
+        }
+
+        userCont = baseCont + catchUp;
+
+        const tier1Amount = currentIncomeUser * (state.userMatchTier1Max / 100);
+        const tier1Match = tier1Amount * (state.userMatchTier1Pct / 100);
+        const tier2Amount = currentIncomeUser * (state.userMatchTier2Max / 100);
+        const tier2Match = tier2Amount * (state.userMatchTier2Pct / 100);
+        userMatch = Math.min(userCont, tier1Match + tier2Match);
       }
 
       // --- SPOUSE CALCULATIONS ---
       let spouseCont = 0;
       let spouseMatch = 0;
       if (state.hasSpouse && currentAgeSpouse < state.spouseRetireAge) {
-        spouseCont = Math.min(state.spouseContribution, 24500);
-        // Tiered Match Spouse
-        const tier1MatchS = Math.min(state.spouseIncome * (state.spouseMatchTier1Max / 100), spouseCont) * (state.spouseMatchTier1Pct / 100);
-        const spouseContAboveTier1 = Math.max(0, spouseCont - (state.spouseIncome * (state.spouseMatchTier1Max / 100)));
-        const tier2MatchS = Math.min(state.spouseIncome * (state.spouseMatchTier2Max / 100), spouseContAboveTier1) * (state.spouseMatchTier2Pct / 100);
-        spouseMatch = tier1MatchS + tier2MatchS;
+        const baseCont = state.spouseContributionType === 'dollar' 
+          ? state.spouseContribution 
+          : (currentIncomeSpouse * (state.spouseContribution / 100));
+        
+        let catchUp = 0;
+        if (currentAgeSpouse >= 60) {
+          catchUp = state.catchUp60Spouse;
+        } else if (currentAgeSpouse >= 50) {
+          catchUp = state.catchUp50Spouse;
+        }
+
+        spouseCont = baseCont + catchUp;
+
+        const tier1Amount = currentIncomeSpouse * (state.spouseMatchTier1Max / 100);
+        const tier1Match = tier1Amount * (state.spouseMatchTier1Pct / 100);
+        const tier2Amount = currentIncomeSpouse * (state.spouseMatchTier2Max / 100);
+        const tier2Match = tier2Amount * (state.spouseMatchTier2Pct / 100);
+        spouseMatch = Math.min(spouseCont, tier1Match + tier2Match);
       }
 
       // Interest — varies by contribution model
