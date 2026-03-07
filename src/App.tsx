@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar';
+import { AppBar } from './components/AppBar';
 import { InputPanel } from './components/InputPanel';
 import { Dashboard } from './components/Dashboard';
 import { ChatInterface } from './components/ChatInterface';
@@ -40,6 +40,8 @@ export interface AppState {
   ssStartAgeSpouse: 62 | 67 | 70;
   taxRate: number; // Percentage
   enableStressTest: boolean;
+  applyEarlyPenalty: boolean;
+  withdrawalStartAge: number;
 
   isCombinedView: boolean;
   isSidebarOpen: boolean;
@@ -110,6 +112,8 @@ function App() {
     chartType: 'growth',
     contributionModel: 'mid-year',
     theme: 'dark',
+    applyEarlyPenalty: false,
+    withdrawalStartAge: 65,
   });
 
   useEffect(() => {
@@ -133,6 +137,9 @@ function App() {
       const currentAgeUser = state.userAge + yearIdx;
       const currentAgeSpouse = state.spouseAge + yearIdx;
       const cumulativeInflation = Math.pow(1 + inflationRate, yearIdx);
+
+      // Apply Stress Test (2008 Crash: -37% in Year 1)
+      const yearlyReturn = (state.enableStressTest && yearIdx === 0) ? -0.37 : nominalRate;
 
       // --- USER CALCULATIONS ---
       let userCont = 0;
@@ -163,17 +170,14 @@ function App() {
       let spouseInterest: number;
       const m = state.contributionModel;
       if (m === 'end-of-year') {
-        // Interest first, then contributions added at end
-        userInterest = balanceUserNominal * nominalRate;
-        spouseInterest = state.hasSpouse ? balanceSpouseNominal * nominalRate : 0;
+        userInterest = balanceUserNominal * yearlyReturn;
+        spouseInterest = state.hasSpouse ? balanceSpouseNominal * yearlyReturn : 0;
       } else if (m === 'mid-year') {
-        // Half-year credit on contributions (payroll / most realistic)
-        userInterest = (balanceUserNominal * nominalRate) + ((userCont + userMatch) * (nominalRate / 2));
-        spouseInterest = state.hasSpouse ? (balanceSpouseNominal * nominalRate) + ((spouseCont + spouseMatch) * (nominalRate / 2)) : 0;
+        userInterest = (balanceUserNominal * yearlyReturn) + ((userCont + userMatch) * (yearlyReturn / 2));
+        spouseInterest = state.hasSpouse ? (balanceSpouseNominal * yearlyReturn) + ((spouseCont + spouseMatch) * (yearlyReturn / 2)) : 0;
       } else {
-        // beginning-of-year: contributions earn a full year of interest
-        userInterest = (balanceUserNominal + userCont + userMatch) * nominalRate;
-        spouseInterest = state.hasSpouse ? (balanceSpouseNominal + spouseCont + spouseMatch) * nominalRate : 0;
+        userInterest = (balanceUserNominal + userCont + userMatch) * yearlyReturn;
+        spouseInterest = state.hasSpouse ? (balanceSpouseNominal + spouseCont + spouseMatch) * yearlyReturn : 0;
       }
 
       // Withdrawals
@@ -184,25 +188,37 @@ function App() {
       let spouseDerivation = "";
       let combinedDerivation = "";
 
-      if (currentAgeUser >= state.retireAge) {
+      if (currentAgeUser >= state.retireAge && currentAgeUser >= state.withdrawalStartAge) {
         const ssActive = currentAgeUser >= state.ssStartAgeUser;
         const ssOffset = ssActive ? state.socialSecurityUser * 12 : 0;
         const netNeed = Math.max(0, state.userWithdrawalRate - ssOffset);
         const inflationAdjusted = netNeed * cumulativeInflation;
-        userWithdrawal = inflationAdjusted / (1 - (state.taxRate / 100));
+        
+        // Apply 10% Early Withdrawal Penalty if under 60
+        const penaltyRate = (currentAgeUser < 60 && state.applyEarlyPenalty) ? 0.10 : 0;
+        const totalTaxAndPenalty = (state.taxRate / 100) + penaltyRate;
+        
+        userWithdrawal = inflationAdjusted / (1 - totalTaxAndPenalty);
         const ssLabel = ssActive ? `-$${(ssOffset).toLocaleString()}` : `$0 (starts age ${state.ssStartAgeUser})`;
-        userDerivation = `PRIMARY:\n• Target: $${state.userWithdrawalRate.toLocaleString()}\n• SS Offset: ${ssLabel}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(userWithdrawal).toLocaleString()}`;
+        const penaltyLabel = penaltyRate > 0 ? ` + 10% Penalty` : '';
+        userDerivation = `PRIMARY:\n• Target: $${state.userWithdrawalRate.toLocaleString()}\n• SS Offset: ${ssLabel}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (Tax ${state.taxRate}%${penaltyLabel}): $${Math.round(userWithdrawal).toLocaleString()}`;
         combinedWithdrawal += userWithdrawal;
       }
 
-      if (state.hasSpouse && currentAgeSpouse >= state.spouseRetireAge) {
+      if (state.hasSpouse && currentAgeSpouse >= state.spouseRetireAge && currentAgeUser >= state.withdrawalStartAge) {
+        // Spouse withdrawal also respects the user's start age choice for simplicity in shared household
         const ssActive = currentAgeSpouse >= state.ssStartAgeSpouse;
         const ssOffset = ssActive ? state.socialSecuritySpouse * 12 : 0;
         const netNeed = Math.max(0, state.spouseWithdrawalRate - ssOffset);
         const inflationAdjusted = netNeed * cumulativeInflation;
-        spouseWithdrawal = inflationAdjusted / (1 - (state.taxRate / 100));
+        
+        const penaltyRate = (currentAgeSpouse < 60 && state.applyEarlyPenalty) ? 0.10 : 0;
+        const totalTaxAndPenalty = (state.taxRate / 100) + penaltyRate;
+        
+        spouseWithdrawal = inflationAdjusted / (1 - totalTaxAndPenalty);
         const ssLabel = ssActive ? `-$${(ssOffset).toLocaleString()}` : `$0 (starts age ${state.ssStartAgeSpouse})`;
-        spouseDerivation = `SPOUSE:\n• Target: $${state.spouseWithdrawalRate.toLocaleString()}\n• SS Offset: ${ssLabel}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(spouseWithdrawal).toLocaleString()}`;
+        const penaltyLabel = penaltyRate > 0 ? ` + 10% Penalty` : '';
+        spouseDerivation = `SPOUSE:\n• Target: $${state.spouseWithdrawalRate.toLocaleString()}\n• SS Offset: ${ssLabel}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (Tax ${state.taxRate}%${penaltyLabel}): $${Math.round(spouseWithdrawal).toLocaleString()}`;
         combinedWithdrawal += spouseWithdrawal;
       }
 
@@ -260,13 +276,29 @@ function App() {
   }, [state]);
 
   return (
-    <div className="app-container">
-      <Sidebar isOpen={state.isSidebarOpen} state={state} updateState={updateState} />
-      <div className={`main-content ${!state.isSidebarOpen ? 'sidebar-closed' : ''}`}>
-        {!state.isFullScreenDashboard && <InputPanel state={state} updateState={updateState} />}
-        <Dashboard data={projectionData} state={state} updateState={updateState} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-base)', overflow: 'hidden' }}>
+      <AppBar state={state} updateState={updateState} />
+      
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div style={{ 
+          width: state.isFullScreenDashboard ? '0' : '380px', 
+          minWidth: state.isFullScreenDashboard ? '0' : '380px',
+          overflow: 'hidden',
+          borderRight: state.isFullScreenDashboard ? '0 solid var(--border)' : '1px solid var(--border)',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          opacity: state.isFullScreenDashboard ? 0 : 1,
+        }}>
+          <div style={{ width: '380px', height: '100%', overflowY: 'auto' }}>
+            <InputPanel state={state} updateState={updateState} />
+          </div>
+        </div>
+        
+        <main style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+          <Dashboard data={projectionData} state={state} updateState={updateState} />
+        </main>
+
+        <ChatInterface data={projectionData} state={state} updateState={updateState} />
       </div>
-      <ChatInterface state={state} data={projectionData} updateState={updateState} />
     </div>
   );
 }

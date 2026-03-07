@@ -245,6 +245,34 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="50" step="1" value={state.taxRate} onChange={(e) => updateState('taxRate', Number(e.target.value))} />
         </div>
 
+        {state.retireAge < 60 && (
+          <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-sm)', background: 'rgba(239, 68, 68, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+            <h4 style={{ fontSize: '0.85rem', color: 'var(--danger)', marginBottom: 'var(--spacing-sm)', fontWeight: 700 }}>Early Wealth Controls</h4>
+            
+            <div className="input-group">
+              <label className="input-label">
+                Begin Withdrawals at Age <span className="value">Age {state.withdrawalStartAge}</span>
+                <InfoTooltip align="right" text="Defer withdrawals until age 60+ to avoid the 10% penalty, even if retiring early." />
+              </label>
+              <input type="range" min={state.retireAge} max="70" value={state.withdrawalStartAge} onChange={(e) => updateState('withdrawalStartAge', Number(e.target.value))} />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input 
+                type="checkbox" 
+                id="applyPenalty" 
+                checked={state.applyEarlyPenalty} 
+                onChange={(e) => updateState('applyEarlyPenalty', e.target.checked)} 
+                style={{ cursor: 'pointer' }}
+              />
+              <label htmlFor="applyPenalty" style={{ cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                Apply 10% Early Withdrawal Penalty
+                <InfoTooltip align="right" text="IRS Penalty for non-qualified withdrawals before age 59½." />
+              </label>
+            </div>
+          </div>
+        )}
+
         <div style={{ marginTop: 'var(--spacing-md)', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <input 
@@ -256,7 +284,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
             />
             <label htmlFor="stressTest" style={{ cursor: 'pointer', fontSize: '0.875rem', color: 'var(--danger)', fontWeight: 600 }}>
               Simulate 2008 Crash
-              <InfoTooltip align="right" text="Forces -30% return during first 2 retirement years." />
+              <InfoTooltip align="right" text="Applies a -37% return in Month 1 of Year 1 to stress test plan resilience." />
             </label>
           </div>
         </div>

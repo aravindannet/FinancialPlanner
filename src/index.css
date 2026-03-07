@@ -47,8 +47,8 @@
 :root[data-theme='light'] {
   --bg-base: #f1f5f9;
   --bg-surface: rgba(255, 255, 255, 0.7);
-  --bg-surface-hover: rgba(255, 255, 255, 0.9);
-  --bg-surface-active: rgba(255, 255, 255, 1);
+  --bg-surface-hover: rgba(0, 0, 0, 0.04);
+  --bg-surface-active: rgba(0, 0, 0, 0.08);
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -130,6 +130,10 @@ input[type="range"] {
   border-radius: var(--radius-full);
   outline: none;
   transition: var(--transition-fast);
+}
+
+:root[data-theme='light'] input[type="range"] {
+  background: #cbd5e1;
 }
 
 input[type="range"]::-webkit-slider-thumb {
