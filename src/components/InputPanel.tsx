@@ -140,10 +140,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         </div>
         <div className="input-group">
           <label className="input-label">
-            Est. Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecurity.toLocaleString()}/mo</span>
-            <InfoTooltip align="right" text="Combined monthly Social Security income." />
+            Primary Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecurityUser.toLocaleString()}/mo</span>
+            <InfoTooltip align="right" text="Expected monthly Social Security for the primary user." />
           </label>
-          <input type="range" min="0" max="10000" step="100" value={state.socialSecurity} onChange={(e) => updateState('socialSecurity', Number(e.target.value))} />
+          <input type="range" min="0" max="6000" step="100" value={state.socialSecurityUser} onChange={(e) => updateState('socialSecurityUser', Number(e.target.value))} />
+        </div>
+        <div className="input-group">
+          <label className="input-label">
+            Spouse Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecuritySpouse.toLocaleString()}/mo</span>
+            <InfoTooltip align="right" text="Expected monthly Social Security for the spouse." />
+          </label>
+          <input type="range" min="0" max="6000" step="100" value={state.socialSecuritySpouse} onChange={(e) => updateState('socialSecuritySpouse', Number(e.target.value))} />
         </div>
         <div className="input-group">
           <label className="input-label">

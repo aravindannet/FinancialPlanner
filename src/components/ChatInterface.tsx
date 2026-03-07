@@ -192,8 +192,13 @@ To fix this, consider:
 
         // Social Security
         if (q.includes('social security') || q.includes('ss ')) {
-          updateState('socialSecurity', val);
-          return `✅ Done. **Social Security** set to **$${val.toLocaleString()}/mo**.`;
+          if (isSpouse) {
+            updateState('socialSecuritySpouse', val);
+            return `✅ Done. **Spouse's Social Security** set to **$${val.toLocaleString()}/mo**.`;
+          } else {
+            updateState('socialSecurityUser', val);
+            return `✅ Done. Your **Social Security** set to **$${val.toLocaleString()}/mo**.`;
+          }
         }
 
         // Taxes
@@ -234,7 +239,7 @@ To fix this, consider:
     }
 
     if (q.includes('tax') || q.includes('social security')) {
-      return `Your plan currently assumes an **${state.taxRate}%** effective tax rate and **$${state.socialSecurity.toLocaleString()}/mo** in Social Security benefits. These are subtracted from your total withdrawal need to arrive at the net 401k pull.`;
+      return `Your plan currently assumes an **${state.taxRate}%** effective tax rate and **$${(state.socialSecurityUser + state.socialSecuritySpouse).toLocaleString()}/mo** in total household Social Security benefits. These are subtracted from your total withdrawal need to arrive at the net 401k pull.`;
     }
 
     // 8. Help Fallback

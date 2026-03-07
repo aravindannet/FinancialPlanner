@@ -26,7 +26,8 @@ export interface AppState {
   userWithdrawalRate: number; 
   spouseWithdrawalRate: number; 
   
-  socialSecurity: number; // Monthly
+  socialSecurityUser: number; // Monthly
+  socialSecuritySpouse: number; // Monthly
   taxRate: number; // Percentage
   enableStressTest: boolean;
 
@@ -77,7 +78,8 @@ function App() {
     inflation: 2.5,
     userWithdrawalRate: 60000,
     spouseWithdrawalRate: 60000,
-    socialSecurity: 0,
+    socialSecurityUser: 0,
+    socialSecuritySpouse: 0,
     taxRate: 15,
     enableStressTest: false,
     isCombinedView: true,
@@ -124,7 +126,8 @@ function App() {
       const taxMultiplier = 1 / (1 - state.taxRate / 100);
       
       // Social Security offsets
-      const annualSS = state.socialSecurity * 12;
+      const annualSSUser = state.socialSecurityUser * 12;
+      const annualSSSpouse = state.socialSecuritySpouse * 12;
 
       // Withdrawals: Inflate the user's input so their *real* net purchasing power stays flat.
       let userWithdrawal = 0;
@@ -135,22 +138,22 @@ function App() {
       const format = (v: number) => Math.round(v).toLocaleString();
 
       if (isUserRetired) {
-        const netAfterSS = Math.max(0, state.userWithdrawalRate - annualSS);
+        const netAfterSS = Math.max(0, state.userWithdrawalRate - annualSSUser);
         const inflated = netAfterSS * inflationMultiplier;
         const grossed = inflated * taxMultiplier;
         userWithdrawal = Math.min(balanceUserNominal, grossed);
         
-        userDerivation = `PRIMARY:\n• Current Year Expected Withdrawal: $${format(state.userWithdrawalRate)}\n• SS = $${format(annualSS)}\n• Today's "$${format(netAfterSS)}" after inflation adjusted is ($${format(netAfterSS)} * ${inflationMultiplier.toFixed(2)}) = $${format(inflated)}\n• If you want to take "$${format(inflated)}" from above then with ${state.taxRate}% tax from input you need to take out = $${format(grossed)}`;
+        userDerivation = `PRIMARY:\n1. Target Lifestyle: $${format(state.userWithdrawalRate)}\n2. Minus Social Security: -$${format(annualSSUser)}\n3. Net Need (Today's $): $${format(netAfterSS)}\n4. Adjusted for Inflation (${inflationMultiplier.toFixed(2)}x): $${format(inflated)}\n5. Grossed up for ${state.taxRate}% Tax: $${format(grossed)}`;
         if (userWithdrawal < grossed) userDerivation += `\n⚠️ Capped by Balance`;
       }
       
       if (isSpouseRetired) {
-        const netAfterSS = Math.max(0, state.spouseWithdrawalRate - annualSS);
+        const netAfterSS = Math.max(0, state.spouseWithdrawalRate - annualSSSpouse);
         const inflated = netAfterSS * inflationMultiplier;
         const grossed = inflated * taxMultiplier;
         spouseWithdrawal = Math.min(balanceSpouseNominal, grossed);
 
-        spouseDerivation = `SPOUSE:\n• Current Year Expected Withdrawal: $${format(state.spouseWithdrawalRate)}\n• SS = $${format(annualSS)}\n• Today's "$${format(netAfterSS)}" after inflation adjusted is ($${format(netAfterSS)} * ${inflationMultiplier.toFixed(2)}) = $${format(inflated)}\n• If you want to take "$${format(inflated)}" from above then with ${state.taxRate}% tax from input you need to take out = $${format(grossed)}`;
+        spouseDerivation = `SPOUSE:\n1. Target Lifestyle: $${format(state.spouseWithdrawalRate)}\n2. Minus Social Security: -$${format(annualSSSpouse)}\n3. Net Need (Today's $): $${format(netAfterSS)}\n4. Adjusted for Inflation (${inflationMultiplier.toFixed(2)}x): $${format(inflated)}\n5. Grossed up for ${state.taxRate}% Tax: $${format(grossed)}`;
         if (spouseWithdrawal < grossed) spouseDerivation += `\n⚠️ Capped by Balance`;
       }
 
