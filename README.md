@@ -5,13 +5,14 @@ Aura Plan is a premium, high-fidelity 401k retirement planning application built
 ## 🚀 Key Features
 
 - **Advanced Retirement Intel**:
-  - **Social Security Integration**: Offset your withdrawal needs with expected monthly Social Security income.
-  - **Tax-Adjusted Withdrawals**: Automatically "grosses up" your retirement withdrawals to cover estimated effective taxes.
-  - **Inflation Protection**: Set your spending goals in *today's dollars*; the engine automatically adjusts for inflation every year to protect your purchasing power.
+  - **Social Security Integration**: Offset your withdrawal needs with expected monthly Social Security income (configurable start ages: 62, 67, 70).
+  - **Tax-Adjusted Withdrawals**: Automatically "grosses up" retirement withdrawals to cover estimated effective taxes.
+  - **Early Wealth Controls**: Specialized logic for early retirees (age < 60) with options to defer withdrawals or apply a 10% IRS penalty.
+  - **Inflation Protection**: Set goals in *today's dollars*; the engine adjusts for inflation every year to protect purchasing power.
 - **Robust Financial Engine**:
   - **Plan Runway Metric**: Instantly see at what age your funds will deplete, with visual alerts if you run out early.
-  - **Bad Market Stress Test**: Simulate a major market downturn (e.g., -30% return) during the first two years of retirement to test portfolio durability.
-  - **IRS 401k Limit Validation**: Intelligently caps contributions at the annual maximums ($23,500 base, plus $7,500 catch-up for Age 50+).
+  - **Bad Market Stress Test**: Fixed and verified 2008 Crash simulation (-37% in Year 1) to test portfolio durability.
+  - **IRS 401k Limit Validation**: Intelligently caps contributions at the annual maximums.
 - **Premium UI/UX**:
   - **Dynamic Area Charts**: Visualize Nominal vs Real growth with gradients and million-dollar scale formatting.
   - **Dual View Modes**: Switch between **Combined Household** health and **Separate** individual breakdowns.
