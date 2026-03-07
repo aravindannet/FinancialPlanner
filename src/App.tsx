@@ -35,7 +35,9 @@ export interface AppState {
   spouseWithdrawalRate: number; 
   
   socialSecurityUser: number; // Monthly
+  ssStartAgeUser: 62 | 67 | 70;
   socialSecuritySpouse: number; // Monthly
+  ssStartAgeSpouse: 62 | 67 | 70;
   taxRate: number; // Percentage
   enableStressTest: boolean;
 
@@ -43,6 +45,7 @@ export interface AppState {
   isSidebarOpen: boolean;
   isFullScreenDashboard: boolean;
   chartType: 'growth' | 'annual';
+  contributionModel: 'end-of-year' | 'beginning-of-year' | 'mid-year';
 }
 
 export interface PersonYearData {
@@ -95,13 +98,16 @@ function App() {
     userWithdrawalRate: 60000,
     spouseWithdrawalRate: 60000,
     socialSecurityUser: 0,
+    ssStartAgeUser: 67,
     socialSecuritySpouse: 0,
+    ssStartAgeSpouse: 67,
     taxRate: 15,
     enableStressTest: false,
     isCombinedView: true,
     isSidebarOpen: true,
     isFullScreenDashboard: false,
     chartType: 'growth',
+    contributionModel: 'mid-year',
   });
 
   const updateState = (key: keyof AppState, value: any) => {
@@ -126,7 +132,7 @@ function App() {
       let userCont = 0;
       let userMatch = 0;
       if (currentAgeUser < state.retireAge) {
-        userCont = Math.min(state.userContribution, 23000); 
+        userCont = Math.min(state.userContribution, 24500); 
         // Tiered Match User
         const tier1Match = Math.min(state.userIncome * (state.userMatchTier1Max / 100), userCont) * (state.userMatchTier1Pct / 100);
         const userContAboveTier1 = Math.max(0, userCont - (state.userIncome * (state.userMatchTier1Max / 100)));
@@ -138,7 +144,7 @@ function App() {
       let spouseCont = 0;
       let spouseMatch = 0;
       if (state.hasSpouse && currentAgeSpouse < state.spouseRetireAge) {
-        spouseCont = Math.min(state.spouseContribution, 23000);
+        spouseCont = Math.min(state.spouseContribution, 24500);
         // Tiered Match Spouse
         const tier1MatchS = Math.min(state.spouseIncome * (state.spouseMatchTier1Max / 100), spouseCont) * (state.spouseMatchTier1Pct / 100);
         const spouseContAboveTier1 = Math.max(0, spouseCont - (state.spouseIncome * (state.spouseMatchTier1Max / 100)));
@@ -146,9 +152,23 @@ function App() {
         spouseMatch = tier1MatchS + tier2MatchS;
       }
 
-      // Interest
-      const userInterest = (balanceUserNominal + userCont + userMatch) * nominalRate;
-      const spouseInterest = state.hasSpouse ? (balanceSpouseNominal + spouseCont + spouseMatch) * nominalRate : 0;
+      // Interest — varies by contribution model
+      let userInterest: number;
+      let spouseInterest: number;
+      const m = state.contributionModel;
+      if (m === 'end-of-year') {
+        // Interest first, then contributions added at end
+        userInterest = balanceUserNominal * nominalRate;
+        spouseInterest = state.hasSpouse ? balanceSpouseNominal * nominalRate : 0;
+      } else if (m === 'mid-year') {
+        // Half-year credit on contributions (payroll / most realistic)
+        userInterest = (balanceUserNominal * nominalRate) + ((userCont + userMatch) * (nominalRate / 2));
+        spouseInterest = state.hasSpouse ? (balanceSpouseNominal * nominalRate) + ((spouseCont + spouseMatch) * (nominalRate / 2)) : 0;
+      } else {
+        // beginning-of-year: contributions earn a full year of interest
+        userInterest = (balanceUserNominal + userCont + userMatch) * nominalRate;
+        spouseInterest = state.hasSpouse ? (balanceSpouseNominal + spouseCont + spouseMatch) * nominalRate : 0;
+      }
 
       // Withdrawals
       let userWithdrawal = 0;
@@ -159,18 +179,24 @@ function App() {
       let combinedDerivation = "";
 
       if (currentAgeUser >= state.retireAge) {
-        const netNeed = Math.max(0, state.userWithdrawalRate - (state.socialSecurityUser * 12));
+        const ssActive = currentAgeUser >= state.ssStartAgeUser;
+        const ssOffset = ssActive ? state.socialSecurityUser * 12 : 0;
+        const netNeed = Math.max(0, state.userWithdrawalRate - ssOffset);
         const inflationAdjusted = netNeed * cumulativeInflation;
         userWithdrawal = inflationAdjusted / (1 - (state.taxRate / 100));
-        userDerivation = `PRIMARY:\n• Target: $${state.userWithdrawalRate.toLocaleString()}\n• SS Offset: -$${(state.socialSecurityUser*12).toLocaleString()}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(userWithdrawal).toLocaleString()}`;
+        const ssLabel = ssActive ? `-$${(ssOffset).toLocaleString()}` : `$0 (starts age ${state.ssStartAgeUser})`;
+        userDerivation = `PRIMARY:\n• Target: $${state.userWithdrawalRate.toLocaleString()}\n• SS Offset: ${ssLabel}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(userWithdrawal).toLocaleString()}`;
         combinedWithdrawal += userWithdrawal;
       }
 
       if (state.hasSpouse && currentAgeSpouse >= state.spouseRetireAge) {
-        const netNeed = Math.max(0, state.spouseWithdrawalRate - (state.socialSecuritySpouse * 12));
+        const ssActive = currentAgeSpouse >= state.ssStartAgeSpouse;
+        const ssOffset = ssActive ? state.socialSecuritySpouse * 12 : 0;
+        const netNeed = Math.max(0, state.spouseWithdrawalRate - ssOffset);
         const inflationAdjusted = netNeed * cumulativeInflation;
         spouseWithdrawal = inflationAdjusted / (1 - (state.taxRate / 100));
-        spouseDerivation = `SPOUSE:\n• Target: $${state.spouseWithdrawalRate.toLocaleString()}\n• SS Offset: -$${(state.socialSecuritySpouse*12).toLocaleString()}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(spouseWithdrawal).toLocaleString()}`;
+        const ssLabel = ssActive ? `-$${(ssOffset).toLocaleString()}` : `$0 (starts age ${state.ssStartAgeSpouse})`;
+        spouseDerivation = `SPOUSE:\n• Target: $${state.spouseWithdrawalRate.toLocaleString()}\n• SS Offset: ${ssLabel}\n• Net Need: $${netNeed.toLocaleString()}\n• Inflation (x${cumulativeInflation.toFixed(2)}): $${Math.round(inflationAdjusted).toLocaleString()}\n• Gross-up (/${(1-state.taxRate/100).toFixed(2)}): $${Math.round(spouseWithdrawal).toLocaleString()}`;
         combinedWithdrawal += spouseWithdrawal;
       }
 

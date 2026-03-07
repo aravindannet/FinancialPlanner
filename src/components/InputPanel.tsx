@@ -4,19 +4,11 @@ import type { AppState } from '../App';
 
 interface InputPanelProps {
   state: AppState;
-  updateState: (key: keyof AppState, value: number | boolean) => void;
+  updateState: (key: keyof AppState, value: number | boolean | string) => void;
 }
 
 export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) => {
-  const getIrsLimit = (age: number) => age >= 50 ? 31000 : 23500;
 
-  const renderLimitWarning = (contrib: number, age: number) => {
-    const limit = getIrsLimit(age);
-    if (contrib > limit) {
-      return <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.25rem' }}>IRS Limit Exceeded! Max is ${limit.toLocaleString()}</div>;
-    }
-    return null;
-  };
 
   return (
     <div className="glass-panel" style={{ width: '380px', flexShrink: 0, padding: 'var(--spacing-xl)', overflowY: 'auto', borderLeft: 'none', borderTop: 'none', borderBottom: 'none' }}>
@@ -62,10 +54,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div className="input-group">
           <label className="input-label">
             Annual Contribution <span className="value">${state.userContribution.toLocaleString()}</span>
-            <InfoTooltip align="right" text="Your annual deposit. Automatically capped at IRS limits in simulations." />
+            <InfoTooltip align="right" text="Your annual 401k contribution." />
           </label>
           <input type="range" min="0" max="69000" step="500" value={state.userContribution} onChange={(e) => updateState('userContribution', Number(e.target.value))} />
-          {renderLimitWarning(state.userContribution, state.userAge)}
         </div>
         <div className="input-group" style={{ marginBottom: 'var(--spacing-md)' }}>
           <label className="input-label" style={{ marginBottom: '0.5rem' }}>
@@ -130,7 +121,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
             <InfoTooltip align="right" text="Spouse's annual deposit." />
           </label>
           <input type="range" min="0" max="69000" step="500" value={state.spouseContribution} onChange={(e) => updateState('spouseContribution', Number(e.target.value))} />
-          {renderLimitWarning(state.spouseContribution, state.spouseAge)}
         </div>
         <div className="input-group" style={{ marginBottom: 'var(--spacing-md)' }}>
           <label className="input-label" style={{ marginBottom: '0.5rem' }}>
@@ -190,17 +180,61 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div className="input-group">
           <label className="input-label">
             Primary Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecurityUser.toLocaleString()}/mo</span>
-            <InfoTooltip align="right" text="Expected monthly Social Security for the primary user." />
+            <InfoTooltip align="right" text="Expected monthly Social Security benefit for the primary user." />
           </label>
           <input type="range" min="0" max="6000" step="100" value={state.socialSecurityUser} onChange={(e) => updateState('socialSecurityUser', Number(e.target.value))} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0 }}>Starts at:</span>
+            {([62, 67, 70] as const).map(age => (
+              <button
+                key={age}
+                onClick={() => updateState('ssStartAgeUser', age)}
+                style={{
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '999px',
+                  border: state.ssStartAgeUser === age ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                  background: state.ssStartAgeUser === age ? 'var(--primary)' : 'transparent',
+                  color: state.ssStartAgeUser === age ? 'white' : 'var(--text-secondary)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {age}
+              </button>
+            ))}
+          </div>
         </div>
         {state.hasSpouse && (
           <div className="input-group">
             <label className="input-label">
               Spouse Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecuritySpouse.toLocaleString()}/mo</span>
-              <InfoTooltip align="right" text="Expected monthly Social Security for the spouse." />
+              <InfoTooltip align="right" text="Expected monthly Social Security benefit for the spouse." />
             </label>
             <input type="range" min="0" max="6000" step="100" value={state.socialSecuritySpouse} onChange={(e) => updateState('socialSecuritySpouse', Number(e.target.value))} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0 }}>Starts at:</span>
+              {([62, 67, 70] as const).map(age => (
+                <button
+                  key={age}
+                  onClick={() => updateState('ssStartAgeSpouse', age)}
+                  style={{
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '999px',
+                    border: state.ssStartAgeSpouse === age ? '1.5px solid var(--accent-1)' : '1px solid var(--border)',
+                    background: state.ssStartAgeSpouse === age ? 'var(--accent-1)' : 'transparent',
+                    color: state.ssStartAgeSpouse === age ? 'white' : 'var(--text-secondary)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {age}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         <div className="input-group">
@@ -225,6 +259,67 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
               <InfoTooltip align="right" text="Forces -30% return during first 2 retirement years." />
             </label>
           </div>
+        </div>
+      </div>
+
+      {/* Contribution Model Selector */}
+      <div className="glass-panel" style={{ padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.02)' }}>
+        <h3 style={{ fontSize: '1rem', color: 'var(--accent-2)', marginBottom: 'var(--spacing-sm)' }}>
+          Contribution Timing Model
+          <InfoTooltip align="right" text="Controls when contributions are assumed to be invested each year. This affects your total projected growth." />
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {([
+            {
+              key: 'end-of-year',
+              label: 'End of Year',
+              sub: 'Conservative',
+              tip: 'Interest on start balance first, then contributions added at year-end. Most textbooks use this. Formula: Interest = Start × Rate. End = Start + Interest + Contributions.',
+            },
+            {
+              key: 'mid-year',
+              label: 'Mid-Year / Payroll',
+              sub: 'Most Realistic',
+              tip: '401k deductions happen each paycheck, so contributions earn ~half a year of interest on average. Formula: Interest = (Start × Rate) + (Contributions × Rate÷2). End = Start + Contributions + Interest.',
+            },
+            {
+              key: 'beginning-of-year',
+              label: 'Beginning of Year',
+              sub: 'Aggressive',
+              tip: 'Contributions added on January 1 and earn a full year of interest. Formula: Interest = (Start + Contributions) × Rate. End = Start + Contributions + Interest.',
+            },
+          ] as const).map(({ key, label, sub, tip }) => (
+            <button
+              key={key}
+              onClick={() => updateState('contributionModel', key)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.6rem 0.75rem',
+                borderRadius: 'var(--radius-md)',
+                border: state.contributionModel === key ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                background: state.contributionModel === key ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{
+                width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
+                border: state.contributionModel === key ? '4px solid var(--primary)' : '2px solid var(--border)',
+                background: state.contributionModel === key ? 'white' : 'transparent',
+                transition: 'all 0.15s',
+              }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: state.contributionModel === key ? 'var(--primary)' : 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{sub}</div>
+              </div>
+              <InfoTooltip align="right" text={tip} />
+            </button>
+          ))}
         </div>
       </div>
 
