@@ -73,31 +73,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.5rem', borderRadius: 'var(--radius-full)' }}>
-            <button 
-              onClick={() => updateState('isCombinedView', false)}
-              style={{ 
-                background: !state.isCombinedView ? 'var(--primary)' : 'transparent', 
-                color: !state.isCombinedView ? 'white' : 'var(--text-secondary)',
-                border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.2s'
-              }}
-            >
-              Separate
-            </button>
-            <button 
-              onClick={() => updateState('isCombinedView', true)}
-              style={{ 
-                background: state.isCombinedView ? 'var(--primary)' : 'transparent', 
-                color: state.isCombinedView ? 'white' : 'var(--text-secondary)',
-                border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.2s'
-              }}
-            >
-              Combined
-            </button>
-          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {state.hasSpouse && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.5rem', borderRadius: 'var(--radius-full)' }}>
+              <button 
+                onClick={() => updateState('isCombinedView', false)}
+                style={{ 
+                  background: !state.isCombinedView ? 'var(--primary)' : 'transparent', 
+                  color: !state.isCombinedView ? 'white' : 'var(--text-secondary)',
+                  border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                Separate
+              </button>
+              <button 
+                onClick={() => updateState('isCombinedView', true)}
+                style={{ 
+                  background: state.isCombinedView ? 'var(--primary)' : 'transparent', 
+                  color: state.isCombinedView ? 'white' : 'var(--text-secondary)',
+                  border: 'none', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                Combined
+              </button>
+            </div>
+          )}
 
           <button 
             onClick={() => updateState('isFullScreenDashboard', !state.isFullScreenDashboard)}
@@ -132,17 +134,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Balance at Retirement</p>
             <TrendingUp size={20} color="var(--primary)" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: state.hasSpouse ? '1fr 1fr' : '1fr', gap: '1rem' }}>
             <div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
               <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(userRetireData?.startingBalanceNominal || 0)}</div>
               <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(userRetireData?.startingBalanceReal || 0)} Real</p>
             </div>
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(spouseRetireData?.startingBalanceNominal || 0)}</div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(spouseRetireData?.startingBalanceReal || 0)} Real</p>
-            </div>
+            {state.hasSpouse && (
+              <div>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{formatMil(spouseRetireData?.startingBalanceNominal || 0)}</div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--accent-2)' }}>{formatMil(spouseRetireData?.startingBalanceReal || 0)} Real</p>
+              </div>
+            )}
           </div>
         </div>
         
@@ -152,15 +156,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Lifetime Contributions</p>
             <Coins size={20} color="var(--accent-1)" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: state.hasSpouse ? '1fr 1fr' : '1fr', gap: '1rem' }}>
             <div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
               <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.userCont)}</div>
             </div>
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseCont)}</div>
-            </div>
+            {state.hasSpouse && (
+              <div>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseCont)}</div>
+              </div>
+            )}
           </div>
         </div>
         
@@ -170,15 +176,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Total Employer Match</p>
             <HandCoins size={20} color="var(--accent-2)" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: state.hasSpouse ? '1fr 1fr' : '1fr', gap: '1rem' }}>
             <div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</p>
               <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.userMatch)}</div>
             </div>
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseMatch)}</div>
-            </div>
+            {state.hasSpouse && (
+              <div>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Spouse</p>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatNum(totals.spouseMatch)}</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -187,7 +195,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
       <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-2xl)', animationDelay: '0.4s' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
           <CalendarDays size={20} color="var(--primary)" />
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Decadal Wealth Milestones (Combined)</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Decadal Wealth Milestones {state.hasSpouse ? '(Combined)' : ''}</h3>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
           {highlights.map((h, idx) => (

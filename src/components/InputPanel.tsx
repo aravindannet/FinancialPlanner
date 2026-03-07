@@ -24,7 +24,19 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
       
       {/* Primary User Card */}
       <div className="glass-panel" style={{ padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.02)' }}>
-        <h3 style={{ fontSize: '1rem', color: 'var(--primary)', marginBottom: 'var(--spacing-md)' }}>Primary User</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--primary)' }}>Primary User</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input 
+              type="checkbox" 
+              id="hasSpouse" 
+              checked={state.hasSpouse} 
+              onChange={(e) => updateState('hasSpouse', e.target.checked)} 
+              style={{ cursor: 'pointer' }}
+            />
+            <label htmlFor="hasSpouse" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>Include Spouse</label>
+          </div>
+        </div>
         
         <div className="input-group">
           <label className="input-label">
@@ -55,12 +67,29 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="69000" step="500" value={state.userContribution} onChange={(e) => updateState('userContribution', Number(e.target.value))} />
           {renderLimitWarning(state.userContribution, state.userAge)}
         </div>
-        <div className="input-group">
-          <label className="input-label">
-            Employer Match <span className="value">{state.userMatchPct}%</span>
-            <InfoTooltip align="right" text="Percentage of income your employer contributes to your 401k." />
+        <div className="input-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+          <label className="input-label" style={{ marginBottom: '0.5rem' }}>
+            Employer Match Tiers
+            <InfoTooltip align="right" text="Match Rate on first tier of salary %, and Rate on second tier." />
           </label>
-          <input type="range" min="0" max="15" step="1" value={state.userMatchPct} onChange={(e) => updateState('userMatchPct', Number(e.target.value))} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+            <div>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>TIER 1 MATCH %</p>
+              <input type="number" value={state.userMatchTier1Pct} onChange={(e) => updateState('userMatchTier1Pct', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>UP TO SALARY %</p>
+              <input type="number" value={state.userMatchTier1Max} onChange={(e) => updateState('userMatchTier1Max', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+            <div style={{ marginTop: '0.25rem' }}>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>TIER 2 MATCH %</p>
+              <input type="number" value={state.userMatchTier2Pct} onChange={(e) => updateState('userMatchTier2Pct', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+            <div style={{ marginTop: '0.25rem' }}>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ON NEXT SALARY %</p>
+              <input type="number" value={state.userMatchTier2Max} onChange={(e) => updateState('userMatchTier2Max', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+          </div>
         </div>
         <div className="input-group">
           <label className="input-label">
@@ -70,11 +99,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="2000000" step="5000" value={state.currentBalanceUser} onChange={(e) => updateState('currentBalanceUser', Number(e.target.value))} />
         </div>
       </div>
-
-      {/* Spouse Card */}
-      <div className="glass-panel" style={{ padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.02)' }}>
-        <h3 style={{ fontSize: '1rem', color: 'var(--accent-2)', marginBottom: 'var(--spacing-md)' }}>Spouse / Partner</h3>
-        <div className="input-group">
+      
+      {state.hasSpouse && (
+        <div className="glass-panel" style={{ padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.02)' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--accent-2)', marginBottom: 'var(--spacing-md)' }}>Spouse / Partner</h3>
+          <div className="input-group">
           <label className="input-label">
             Age <span className="value">{state.spouseAge}</span>
             <InfoTooltip align="right" text="Your spouse's current age." />
@@ -103,12 +132,29 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="69000" step="500" value={state.spouseContribution} onChange={(e) => updateState('spouseContribution', Number(e.target.value))} />
           {renderLimitWarning(state.spouseContribution, state.spouseAge)}
         </div>
-        <div className="input-group">
-          <label className="input-label">
-            Employer Match <span className="value">{state.spouseMatchPct}%</span>
-            <InfoTooltip align="right" text="Spouse's employer match percentage." />
+        <div className="input-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+          <label className="input-label" style={{ marginBottom: '0.5rem' }}>
+            Employer Match Tiers
+            <InfoTooltip align="right" text="Match Rate on first tier of salary %, and Rate on second tier." />
           </label>
-          <input type="range" min="0" max="15" step="1" value={state.spouseMatchPct} onChange={(e) => updateState('spouseMatchPct', Number(e.target.value))} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+            <div>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>TIER 1 MATCH %</p>
+              <input type="number" value={state.spouseMatchTier1Pct} onChange={(e) => updateState('spouseMatchTier1Pct', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>UP TO SALARY %</p>
+              <input type="number" value={state.spouseMatchTier1Max} onChange={(e) => updateState('spouseMatchTier1Max', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+            <div style={{ marginTop: '0.25rem' }}>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>TIER 2 MATCH %</p>
+              <input type="number" value={state.spouseMatchTier2Pct} onChange={(e) => updateState('spouseMatchTier2Pct', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+            <div style={{ marginTop: '0.25rem' }}>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ON NEXT SALARY %</p>
+              <input type="number" value={state.spouseMatchTier2Max} onChange={(e) => updateState('spouseMatchTier2Max', Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '0.25rem', fontSize: '0.8rem' }} />
+            </div>
+          </div>
         </div>
         <div className="input-group">
           <label className="input-label">
@@ -118,6 +164,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <input type="range" min="0" max="2000000" step="5000" value={state.currentBalanceSpouse} onChange={(e) => updateState('currentBalanceSpouse', Number(e.target.value))} />
         </div>
       </div>
+      )}
 
       {/* Retirement Phase Card */}
       <div className="glass-panel" style={{ padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.02)' }}>
@@ -131,13 +178,15 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           </label>
           <input type="range" min="0" max="500000" step="1000" value={state.userWithdrawalRate} onChange={(e) => updateState('userWithdrawalRate', Number(e.target.value))} />
         </div>
-        <div className="input-group">
-          <label className="input-label">
-            Spouse Net Withdrawal <span className="value" style={{ color: 'var(--danger)' }}>${state.spouseWithdrawalRate.toLocaleString()}/yr</span>
-            <InfoTooltip align="right" text="Desired take-home cash for spouse per year." />
-          </label>
-          <input type="range" min="0" max="500000" step="1000" value={state.spouseWithdrawalRate} onChange={(e) => updateState('spouseWithdrawalRate', Number(e.target.value))} />
-        </div>
+        {state.hasSpouse && (
+          <div className="input-group">
+            <label className="input-label">
+              Spouse Net Withdrawal <span className="value" style={{ color: 'var(--danger)' }}>${state.spouseWithdrawalRate.toLocaleString()}/yr</span>
+              <InfoTooltip align="right" text="Desired take-home cash for spouse per year." />
+            </label>
+            <input type="range" min="0" max="500000" step="1000" value={state.spouseWithdrawalRate} onChange={(e) => updateState('spouseWithdrawalRate', Number(e.target.value))} />
+          </div>
+        )}
         <div className="input-group">
           <label className="input-label">
             Primary Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecurityUser.toLocaleString()}/mo</span>
@@ -145,13 +194,15 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           </label>
           <input type="range" min="0" max="6000" step="100" value={state.socialSecurityUser} onChange={(e) => updateState('socialSecurityUser', Number(e.target.value))} />
         </div>
-        <div className="input-group">
-          <label className="input-label">
-            Spouse Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecuritySpouse.toLocaleString()}/mo</span>
-            <InfoTooltip align="right" text="Expected monthly Social Security for the spouse." />
-          </label>
-          <input type="range" min="0" max="6000" step="100" value={state.socialSecuritySpouse} onChange={(e) => updateState('socialSecuritySpouse', Number(e.target.value))} />
-        </div>
+        {state.hasSpouse && (
+          <div className="input-group">
+            <label className="input-label">
+              Spouse Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecuritySpouse.toLocaleString()}/mo</span>
+              <InfoTooltip align="right" text="Expected monthly Social Security for the spouse." />
+            </label>
+            <input type="range" min="0" max="6000" step="100" value={state.socialSecuritySpouse} onChange={(e) => updateState('socialSecuritySpouse', Number(e.target.value))} />
+          </div>
+        )}
         <div className="input-group">
           <label className="input-label">
             Effective Tax Rate <span className="value">{state.taxRate}%</span>

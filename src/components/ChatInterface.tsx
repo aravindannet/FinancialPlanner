@@ -99,8 +99,8 @@ To fix this, consider:
 
     // 4. Comparison Queries
     if (q.includes('spouse') || q.includes('more than') || q.includes('compare')) {
-      if (q.includes('match')) {
-        return `You are getting a **${state.userMatchPct}%** match, while your spouse is getting **${state.spouseMatchPct}%**. Is your employer more generous, or is it time for a renegotiation? 😉`;
+      if (q.includes('match') && state.hasSpouse) {
+        return `You are getting a **${state.userMatchTier1Pct}%** match (Tier 1), while your spouse is getting **${state.spouseMatchTier1Pct}%**. Is your employer more generous, or is it time for a renegotiation? 😉`;
       }
       if (q.includes('contribution') || q.includes('save')) {
         const diff = Math.abs(state.userContribution - state.spouseContribution);
@@ -170,12 +170,36 @@ To fix this, consider:
 
         // Match
         if (q.includes('match')) {
-          if (isSpouse) {
-            updateState('spouseMatchPct', val);
-            return `✅ Done. **Spouse's Match** set to **${val}%**.`;
-          } else {
-            updateState('userMatchPct', val);
-            return `✅ Done. Your **Match** set to **${val}%**.`;
+          const matchTier1 = q.match(/(\d+)%?\s*(?:match|at)?\s*(?:on|up to|first)\s*(\d+)%?/i);
+          const matchTier2 = q.match(/(?:next|then|second)\s*(\d+)%?\s*(?:at|is|match)?\s*(\d+)%?/i);
+          
+          if (matchTier1) {
+            const r1 = parseInt(matchTier1[1]);
+            const m1 = parseInt(matchTier1[2]);
+            updateState(isSpouse ? 'spouseMatchTier1Pct' : 'userMatchTier1Pct', r1);
+            updateState(isSpouse ? 'spouseMatchTier1Max' : 'userMatchTier1Max', m1);
+            
+            let msg = `✅ Done. **${isSpouse ? "Spouse's" : "Your"} Match** set to **${r1}% on first ${m1}%**.`;
+            
+            if (matchTier2) {
+              const r2 = parseInt(matchTier2[1]);
+              const m2 = parseInt(matchTier2[2]);
+              updateState(isSpouse ? 'spouseMatchTier2Pct' : 'userMatchTier2Pct', r2);
+              updateState(isSpouse ? 'spouseMatchTier2Max' : 'userMatchTier2Max', m2);
+              msg += ` (And **${r2}% on next ${m2}%**)`;
+            } else {
+              updateState(isSpouse ? 'spouseMatchTier2Pct' : 'userMatchTier2Pct', 0);
+              updateState(isSpouse ? 'spouseMatchTier2Max' : 'userMatchTier2Max', 0);
+            }
+            return msg;
+          }
+
+          if (val > 0) {
+            updateState(isSpouse ? 'spouseMatchTier1Pct' : 'userMatchTier1Pct', 100);
+            updateState(isSpouse ? 'spouseMatchTier1Max' : 'userMatchTier1Max', val);
+            updateState(isSpouse ? 'spouseMatchTier2Pct' : 'userMatchTier2Pct', 0);
+            updateState(isSpouse ? 'spouseMatchTier2Max' : 'userMatchTier2Max', 0);
+            return `✅ Done. **${isSpouse ? "Spouse's" : "Your"} Match** set to **100% up to ${val}%**.`;
           }
         }
 
@@ -230,6 +254,16 @@ To fix this, consider:
         const newState = !state.enableStressTest;
         updateState('enableStressTest', newState);
         return `✅ **Stress Test** (2008 Crash Simulation) is now **${newState ? 'ENABLED' : 'DISABLED'}**.`;
+      }
+
+      if (q.includes('remove spouse') || q.includes('no spouse') || q.includes('single') || q.includes('delete spouse')) {
+        updateState('hasSpouse', false);
+        return `✅ Done. **Spouse/Partner removed** from the plan. View is now Primary-only.`;
+      }
+
+      if (q.includes('add spouse') || q.includes('include spouse') || q.includes('partner') || q.includes('married')) {
+        updateState('hasSpouse', true);
+        return `✅ Done. **Spouse/Partner added** back to the plan.`;
       }
     }
 

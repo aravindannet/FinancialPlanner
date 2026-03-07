@@ -10,15 +10,23 @@ export interface AppState {
   retireAge: number;
   userIncome: number;
   userContribution: number;
-  userMatchPct: number;
   currentBalanceUser: number;
 
   spouseAge: number;
   spouseRetireAge: number;
   spouseIncome: number;
   spouseContribution: number;
-  spouseMatchPct: number;
+  spouseMatchTier1Pct: number;
+  spouseMatchTier1Max: number;
+  spouseMatchTier2Pct: number;
+  spouseMatchTier2Max: number;
   currentBalanceSpouse: number;
+  hasSpouse: boolean;
+
+  userMatchTier1Pct: number;
+  userMatchTier1Max: number;
+  userMatchTier2Pct: number;
+  userMatchTier2Max: number;
 
   lifeExpectancy: number;
   expectedReturn: number;
@@ -63,15 +71,22 @@ function App() {
     retireAge: 65,
     userIncome: 100000,
     userContribution: 10000,
-    userMatchPct: 5,
     currentBalanceUser: 50000,
+    userMatchTier1Pct: 100,
+    userMatchTier1Max: 3,
+    userMatchTier2Pct: 50,
+    userMatchTier2Max: 2,
 
     spouseAge: 30,
     spouseRetireAge: 65,
     spouseIncome: 80000,
     spouseContribution: 8000,
-    spouseMatchPct: 5,
+    spouseMatchTier1Pct: 100,
+    spouseMatchTier1Max: 3,
+    spouseMatchTier2Pct: 50,
+    spouseMatchTier2Max: 2,
     currentBalanceSpouse: 30000,
+    hasSpouse: true,
 
     lifeExpectancy: 90,
     expectedReturn: 7,
@@ -114,10 +129,24 @@ function App() {
       const maxSpouseCont = currentSpouseAge >= 50 ? 31000 : 23500;
 
       const actualUserCont = isUserRetired ? 0 : Math.min(state.userContribution, maxUserCont);
-      const actualSpouseCont = isSpouseRetired ? 0 : Math.min(state.spouseContribution, maxSpouseCont);
+      const actualSpouseCont = (isSpouseRetired || !state.hasSpouse) ? 0 : Math.min(state.spouseContribution, maxSpouseCont);
 
-      const userMatch = isUserRetired ? 0 : state.userIncome * (state.userMatchPct / 100);
-      const spouseMatch = isSpouseRetired ? 0 : state.spouseIncome * (state.spouseMatchPct / 100);
+      // Tiered Match Helper
+      const calcMatch = (income: number, contrib: number, t1P: number, t1M: number, t2P: number, t2M: number) => {
+        if (income <= 0 || contrib <= 0) return 0;
+        const contribPct = (contrib / income) * 100;
+        const matchT1Pct = Math.min(contribPct, t1M);
+        const matchT1Amt = (matchT1Pct / 100) * (t1P / 100) * income;
+        let matchT2Amt = 0;
+        if (contribPct > t1M) {
+          const matchT2Pct = Math.min(contribPct - t1M, t2M);
+          matchT2Amt = (matchT2Pct / 100) * (t2P / 100) * income;
+        }
+        return matchT1Amt + matchT2Amt;
+      };
+
+      const userMatch = isUserRetired ? 0 : calcMatch(state.userIncome, state.userContribution, state.userMatchTier1Pct, state.userMatchTier1Max, state.userMatchTier2Pct, state.userMatchTier2Max);
+      const spouseMatch = (isSpouseRetired || !state.hasSpouse) ? 0 : calcMatch(state.spouseIncome, state.spouseContribution, state.spouseMatchTier1Pct, state.spouseMatchTier1Max, state.spouseMatchTier2Pct, state.spouseMatchTier2Max);
 
       // Discount factor for inflation (determines how much more nominal $ is needed to buy the same real goods)
       const inflationMultiplier = Math.pow(1 + inflationRate, i);
@@ -147,7 +176,7 @@ function App() {
         if (userWithdrawal < grossed) userDerivation += `\n⚠️ Capped by Balance`;
       }
       
-      if (isSpouseRetired) {
+      if (isSpouseRetired && state.hasSpouse) {
         const netAfterSS = Math.max(0, state.spouseWithdrawalRate - annualSSSpouse);
         const inflated = netAfterSS * inflationMultiplier;
         const grossed = inflated * taxMultiplier;
@@ -173,10 +202,18 @@ function App() {
       balanceUserNominal = Math.max(0, userBase + userInterest);
 
       // Spouse calculations
-      const spouseStart = balanceSpouseNominal;
-      const spouseBase = balanceSpouseNominal + actualSpouseCont + spouseMatch - spouseWithdrawal;
-      const spouseInterest = spouseBase > 0 ? spouseBase * spouseRate : 0;
-      balanceSpouseNominal = Math.max(0, spouseBase + spouseInterest);
+      const spouseStart = state.hasSpouse ? balanceSpouseNominal : 0;
+      let spouseInterest = 0;
+      if (state.hasSpouse) {
+        const spouseBase = balanceSpouseNominal + actualSpouseCont + spouseMatch - spouseWithdrawal;
+        spouseInterest = spouseBase > 0 ? spouseBase * spouseRate : 0;
+        balanceSpouseNominal = Math.max(0, spouseBase + spouseInterest);
+      } else {
+        balanceSpouseNominal = 0;
+      }
+
+      const combinedWithdrawal = userWithdrawal + (state.hasSpouse ? spouseWithdrawal : 0);
+      const combinedDerivation = userDerivation + (state.hasSpouse ? ("\n\n" + spouseDerivation + `\n\nTOTAL HOUSEHOLD: $${format(userWithdrawal + spouseWithdrawal)}`) : "");
 
       // Discount factor for Real Values
       const discountFactor = inflationMultiplier;
@@ -214,10 +251,8 @@ function App() {
           contributions: actualUserCont + actualSpouseCont,
           employerMatch: userMatch + spouseMatch,
           interestNominal: userInterest + spouseInterest,
-          withdrawals: userWithdrawal + spouseWithdrawal,
-          withdrawalDerivation: (userDerivation || spouseDerivation) 
-            ? `${userDerivation}${userDerivation && spouseDerivation ? '\n\n' : ''}${spouseDerivation}${userDerivation && spouseDerivation ? `\n\nTOTAL HOUSEHOLD: $${format(userWithdrawal + spouseWithdrawal)}` : ''}`
-            : undefined,
+          withdrawals: combinedWithdrawal,
+          withdrawalDerivation: combinedDerivation,
           endingBalanceNominal: balanceUserNominal + balanceSpouseNominal,
           endingBalanceReal: (balanceUserNominal + balanceSpouseNominal) / discountFactor
         }
