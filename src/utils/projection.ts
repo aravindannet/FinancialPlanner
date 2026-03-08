@@ -152,8 +152,15 @@ export const calculateProjection = (state: AppState): YearData[] => {
     const startingUser = balanceUserNominal;
     const startingSpouse = balanceSpouseNominal;
 
-    balanceUserNominal = Math.max(0, balanceUserNominal + userCont + userMatch + userInterest - userWithdrawal);
-    balanceSpouseNominal = state.hasSpouse ? Math.max(0, balanceSpouseNominal + spouseCont + spouseMatch + spouseInterest - spouseWithdrawal) : 0;
+    // Cap withdrawals to available balance (pre-withdrawal balance)
+    const preWithdrawalUser = Math.max(0, balanceUserNominal + userCont + userMatch + userInterest);
+    const preWithdrawalSpouse = state.hasSpouse ? Math.max(0, balanceSpouseNominal + spouseCont + spouseMatch + spouseInterest) : 0;
+
+    const actualUserWithdrawal = Math.min(userWithdrawal, preWithdrawalUser);
+    const actualSpouseWithdrawal = Math.min(spouseWithdrawal, preWithdrawalSpouse);
+
+    balanceUserNominal = Math.max(0, preWithdrawalUser - actualUserWithdrawal);
+    balanceSpouseNominal = state.hasSpouse ? Math.max(0, preWithdrawalSpouse - actualSpouseWithdrawal) : 0;
 
     data.push({
       yearIndex: yearIdx,
@@ -165,7 +172,7 @@ export const calculateProjection = (state: AppState): YearData[] => {
         contributions: userCont,
         employerMatch: userMatch,
         interestNominal: userInterest,
-        withdrawals: userWithdrawal,
+        withdrawals: actualUserWithdrawal,
         withdrawalDerivation: userDerivation,
         endingBalanceNominal: balanceUserNominal,
         endingBalanceReal: balanceUserNominal / cumulativeInflation,
@@ -177,7 +184,7 @@ export const calculateProjection = (state: AppState): YearData[] => {
         contributions: spouseCont,
         employerMatch: spouseMatch,
         interestNominal: spouseInterest,
-        withdrawals: spouseWithdrawal,
+        withdrawals: actualSpouseWithdrawal,
         withdrawalDerivation: spouseDerivation,
         endingBalanceNominal: balanceSpouseNominal,
         endingBalanceReal: balanceSpouseNominal / cumulativeInflation,
@@ -188,7 +195,7 @@ export const calculateProjection = (state: AppState): YearData[] => {
         contributions: userCont + spouseCont,
         employerMatch: userMatch + spouseMatch,
         interestNominal: userInterest + spouseInterest,
-        withdrawals: userWithdrawal + spouseWithdrawal,
+        withdrawals: actualUserWithdrawal + actualSpouseWithdrawal,
         withdrawalDerivation: combinedDerivation,
         endingBalanceNominal: balanceUserNominal + balanceSpouseNominal,
         endingBalanceReal: (balanceUserNominal + balanceSpouseNominal) / cumulativeInflation,
