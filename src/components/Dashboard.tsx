@@ -75,8 +75,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
     }
   }
 
-  // Decadal Highlights (Age 50, 60, 70, 80)
-  const decadalAges = [50, 60, 70, 80];
+  // Decadal Highlights
+  const decadalAges = [50, 60, 70, 80, 90, 100];
   const highlights = decadalAges.map(age => {
     const year = data.find(d => d.userAge === age);
     return year ? { age, data: year.combined } : null;
@@ -272,9 +272,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
           <CalendarDays size={20} color="var(--primary)" />
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Decadal Wealth Milestones {state.hasSpouse ? '(Combined)' : ''}</h3>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           {highlights.map((h, idx) => (
-            <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+            <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', flex: '1 1 0', minWidth: '150px' }}>
               <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Age {h?.age}</p>
               <div style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.25rem' }}>{formatCurrency(h?.data.startingBalanceNominal || 0)}</div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatCurrency(h?.data.startingBalanceReal || 0)} Real Value</p>
