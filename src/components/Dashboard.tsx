@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Charts } from './Charts';
 import { AmortizationTable } from './AmortizationTable';
+import { generatePDFReport } from '../utils/pdfGenerator';
 import type { AppState, YearData } from '../App';
 
 interface DashboardProps {
@@ -25,6 +26,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
     if (Math.abs(v) >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
     if (Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(0)}K`;
     return `$${Math.round(v).toLocaleString()}`;
+  };
+
+  const handleDownloadPDF = () => {
+    generatePDFReport(state);
   };
 
   // Find metrics at retirement
@@ -46,11 +51,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
 
   // Depletion Age
   const depletionYear = data.find(d => {
-    if (state.isCombinedView) return d.combined.endingBalanceNominal === 0 && d.userAge > state.retireAge;
-    return d.user.endingBalanceNominal === 0 && d.user.age > state.retireAge;
+    if (state.isCombinedView) {
+      return d.combined.endingBalanceNominal === 0 && d.userAge > state.retireAge;
+    } else {
+      if (state.separateChartView === 'user') {
+        return d.user.endingBalanceNominal === 0 && d.user.age > state.retireAge;
+      } else if (state.separateChartView === 'spouse' && state.hasSpouse) {
+        return d.spouse.endingBalanceNominal === 0 && d.spouse.age > state.spouseRetireAge;
+      } else {
+        // Fallback to combined if 'both' is selected in separate view
+        return d.combined.endingBalanceNominal === 0 && d.userAge > state.retireAge;
+      }
+    }
   });
   const hasMoneyAtEnd = !depletionYear;
-  const depletionAge = depletionYear ? (state.isCombinedView ? depletionYear.userAge : depletionYear.user.age) : state.lifeExpectancy;
+  
+  let depletionAge = state.lifeExpectancy;
+  if (depletionYear) {
+    if (state.isCombinedView || state.separateChartView === 'both' || state.separateChartView === 'user') {
+      depletionAge = depletionYear.userAge;
+    } else {
+      depletionAge = depletionYear.spouse.age;
+    }
+  }
 
   // Decadal Highlights (Age 50, 60, 70, 80)
   const decadalAges = [50, 60, 70, 80];
@@ -70,6 +93,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            onClick={handleDownloadPDF}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            <ShieldCheck size={16} /> {/* Placeholder icon, could use Download */}
+            Export PDF
+          </button>
+
+
+
           {state.hasSpouse && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.4rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border)' }}>
               <button 
@@ -94,6 +141,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
               >
                 Combined
               </button>
+            </div>
+          )}
+
+          {state.hasSpouse && !state.isCombinedView && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.25rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+              {(['user', 'spouse', 'both'] as const).map((view) => (
+                <button 
+                  key={view}
+                  onClick={() => updateState('separateChartView', view)}
+
+                  style={{ 
+                    background: state.separateChartView === view ? 'rgba(59, 130, 246, 0.15)' : 'transparent', 
+                    color: state.separateChartView === view ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: 'none', padding: '0.35rem 0.75rem', borderRadius: '4px', fontWeight: 600, fontSize: '0.75rem',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    textTransform: 'capitalize'
+                  }}
+                >
+                  {view}
+                </button>
+              ))}
             </div>
           )}
 
@@ -215,7 +283,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
         </div>
       </div>
 
-      <Charts data={data} state={state} />
+      <Charts data={data} state={state} updateState={updateState} />
       <AmortizationTable data={data} state={state} />
     </div>
   );

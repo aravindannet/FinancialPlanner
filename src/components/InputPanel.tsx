@@ -4,7 +4,7 @@ import type { AppState } from '../App';
 
 interface InputPanelProps {
   state: AppState;
-  updateState: (key: keyof AppState, value: number | boolean | string) => void;
+  updateState: (key: keyof AppState | Partial<AppState>, value?: any) => void;
 }
 
 export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) => {
@@ -39,7 +39,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         </div>
         <div className="input-group">
           <label className="input-label">
-            Retirement Age <span className="value">{state.retireAge}</span>
+            Age you plan to stop working <span className="value">{state.retireAge}</span>
             <InfoTooltip align="right" text="Age you plan to stop working and begin withdrawals." />
           </label>
           <input type="range" min={state.userAge} max="90" value={state.retireAge} onChange={(e) => updateState('retireAge', Number(e.target.value))} />
@@ -55,13 +55,31 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
             <label className="input-label" style={{ margin: 0 }}>
               Annual Contribution <span className="value">{state.userContributionType === 'percent' ? `${state.userContribution}%` : `$${state.userContribution.toLocaleString()}`}</span>
-              <InfoTooltip align="right" text="Your annual deposit. Can be specified as a flat dollar amount or a percentage of your salary." />
+              <InfoTooltip align="right" text={
+                <div>
+                  Your annual deposit. Can be specified as a flat dollar amount or a percentage of your salary. 
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+                      Check current IRS limits
+                    </a>
+                  </div>
+                </div>
+              } />
             </label>
             <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
               {['dollar', 'percent'].map((type) => (
                 <button
                   key={type}
-                  onClick={() => updateState('userContributionType', type as any)}
+                  onClick={() => {
+                    if (state.userContributionType === type) return;
+                    let newValue = state.userContribution;
+                    if (type === 'percent') {
+                      newValue = Math.round((state.userContribution / state.userIncome) * 100);
+                    } else {
+                      newValue = Math.round(state.userIncome * (state.userContribution / 100));
+                    }
+                    updateState({ userContributionType: type as any, userContribution: newValue });
+                  }}
                   style={{
                     padding: '2px 8px',
                     fontSize: '0.65rem',
@@ -99,7 +117,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div style={{ marginTop: 'var(--spacing-md)', background: 'rgba(255,255,255,0.01)', padding: 'var(--spacing-sm)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
           <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary)', marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             Catch-up Contributions
-            <InfoTooltip align="right" text="IRS allowed additional deposits for older participants. (Example 2026: $8,000 for age 50+, $11,250 for age 60-63)." />
+            <InfoTooltip align="right" text={
+              <div>
+                IRS allowed additional deposits for older participants. (Example 2026: $8,000 for age 50+, $11,250 for age 60-63).
+                <div style={{ marginTop: '0.5rem' }}>
+                  <a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+                    Check current IRS limits
+                  </a>
+                </div>
+              </div>
+            } />
           </p>
           <div className="input-group">
             <label className="input-label" style={{ fontSize: '0.7rem' }}>
@@ -159,7 +186,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         </div>
         <div className="input-group">
           <label className="input-label">
-            Retirement Age <span className="value">{state.spouseRetireAge}</span>
+            Age you plan to stop working <span className="value">{state.spouseRetireAge}</span>
             <InfoTooltip align="right" text="Age your spouse plans to retire." />
           </label>
           <input type="range" min={state.spouseAge} max="90" value={state.spouseRetireAge} onChange={(e) => updateState('spouseRetireAge', Number(e.target.value))} />
@@ -175,13 +202,31 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
             <label className="input-label" style={{ margin: 0 }}>
               Annual Contribution <span className="value">{state.spouseContributionType === 'percent' ? `${state.spouseContribution}%` : `$${state.spouseContribution.toLocaleString()}`}</span>
-              <InfoTooltip align="right" text="Spouse's annual deposit. Can be specified as a flat dollar amount or a percentage of salary." />
+              <InfoTooltip align="right" text={
+                <div>
+                  Spouse's annual deposit. Can be specified as a flat dollar amount or a percentage of salary.
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-2)', textDecoration: 'underline' }}>
+                      Check current IRS limits
+                    </a>
+                  </div>
+                </div>
+              } />
             </label>
             <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
               {['dollar', 'percent'].map((type) => (
                 <button
                   key={type}
-                  onClick={() => updateState('spouseContributionType', type as any)}
+                  onClick={() => {
+                    if (state.spouseContributionType === type) return;
+                    let newValue = state.spouseContribution;
+                    if (type === 'percent') {
+                      newValue = Math.round((state.spouseContribution / state.spouseIncome) * 100);
+                    } else {
+                      newValue = Math.round(state.spouseIncome * (state.spouseContribution / 100));
+                    }
+                    updateState({ spouseContributionType: type as any, spouseContribution: newValue });
+                  }}
                   style={{
                     padding: '2px 8px',
                     fontSize: '0.65rem',
@@ -219,7 +264,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div style={{ marginTop: 'var(--spacing-md)', background: 'rgba(255,255,255,0.01)', padding: 'var(--spacing-sm)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
           <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--accent-2)', marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             Catch-up Contributions
-            <InfoTooltip align="right" text="IRS additional deposits for spouse." />
+            <InfoTooltip align="right" text={
+              <div>
+                IRS additional deposits for spouse.
+                <div style={{ marginTop: '0.5rem' }}>
+                  <a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-2)', textDecoration: 'underline' }}>
+                    Check current IRS limits
+                  </a>
+                </div>
+              </div>
+            } />
           </p>
           <div className="input-group">
             <label className="input-label" style={{ fontSize: '0.7rem' }}>
@@ -270,8 +324,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
 
       {/* Retirement Phase Card */}
       <div className="glass-panel" style={{ padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.02)' }}>
-        <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: 'var(--spacing-md)' }}>Retirement Goal</h3>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)' }}>Withdrawals adjust for inflation annually.</p>
+        <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          Retirement Goal
+          <InfoTooltip align="right" text="The withdrawal and social security values are today's dollars. As per the inflation rate you set, the simulation will calculate the real value." />
+        </h3>
         
         <div className="input-group">
           <label className="input-label">

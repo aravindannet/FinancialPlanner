@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Info } from 'lucide-react';
 
 interface InfoTooltipProps {
-  text: string;
+  text: React.ReactNode;
   align?: 'left' | 'center' | 'right';
   children?: React.ReactNode;
 }
