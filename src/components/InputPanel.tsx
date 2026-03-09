@@ -11,8 +11,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
 
 
   return (
-    <div className="glass-panel" style={{ width: '380px', flexShrink: 0, padding: 'var(--spacing-xl)', overflowY: 'auto', borderLeft: 'none', borderTop: 'none', borderBottom: 'none' }}>
-      <h2 style={{ marginBottom: 'var(--spacing-xl)', fontSize: '1.25rem' }}>Household Assumptions</h2>
+    <div className="glass-panel" style={{ width: '100%', height: '100%', flexShrink: 0, padding: 'var(--spacing-md)', overflowY: 'auto', borderLeft: 'none', borderTop: 'none', borderBottom: 'none' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xl)' }}>
+        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Assumptions</h2>
+        <button 
+          className="show-on-mobile"
+          onClick={() => updateState('isMobileInputOpen', false)}
+          style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
       
       {/* Primary User Card */}
       <div className="glass-panel" style={{ padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.02)' }}>

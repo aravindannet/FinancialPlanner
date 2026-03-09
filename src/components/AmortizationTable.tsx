@@ -14,7 +14,7 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
   const renderTableHead = () => (
     <thead>
       <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-        <th style={{ padding: '0.75rem', textAlign: 'left' }}>Age</th>
+        <th style={{ padding: '0.75rem', textAlign: 'left', position: 'sticky', left: 0, background: 'var(--bg-base)', zIndex: 10, borderRight: '1px solid var(--border)' }}>Age</th>
         <th style={{ padding: '0.75rem' }}>
           Starting (Nominal)
           <InfoTooltip text="Account value at the start of the year." />
@@ -47,7 +47,7 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
     
     return (
       <tr style={{ borderBottom: '1px solid var(--border)', background: bg }} className="table-row-hover">
-        <td style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 500 }}>{displayAge}</td>
+        <td style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 500, position: 'sticky', left: 0, background: bg === 'transparent' ? 'var(--bg-base)' : bg, zIndex: 9, borderRight: '1px solid var(--border)' }}>{displayAge}</td>
         <td style={{ padding: '0.75rem' }}>${formatNum(d.startingBalanceNominal)}</td>
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.contributions)}</td>
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.employerMatch)}</td>

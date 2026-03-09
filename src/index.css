@@ -124,6 +124,8 @@ h1, h2, h3, h4, h5, h6 {
 
 input[type="range"] {
   -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   width: 100%;
   height: 6px;
   background: var(--bg-surface-active);
@@ -286,4 +288,82 @@ button.primary:hover {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* =========================================
+   Mobile Responsiveness & Utilities
+   ========================================= */
+
+@media (max-width: 768px) {
+  /* Hiding utilities for mobile */
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  /* Mobile padding and layout adjustments */
+  .dashboard-container {
+    padding: var(--spacing-sm) !important;
+  }
+
+  .glass-panel {
+    padding: var(--spacing-md) !important;
+  }
+  
+  /* Stack grid layouts to single column */
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  /* Drawer overlay for navigation / input panel */
+  .mobile-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1050;
+    display: flex;
+    transition: opacity 0.3s ease;
+  }
+
+  .mobile-drawer-content {
+    background: var(--bg-base);
+    width: 340px;
+    max-width: 85vw;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid var(--border);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Sticky buttons for mobile input toggling */
+  .mobile-fab {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+    z-index: 999;
+    cursor: pointer;
+    border: none;
+  }
+}
+
+/* Ensure show-on-mobile is hidden on desktop */
+@media (min-width: 769px) {
+  .show-on-mobile {
+    display: none !important;
+  }
 }

@@ -57,7 +57,7 @@ export const Charts: React.FC<ChartsProps> = ({ data, state, updateState }) => {
       </div>
       <div style={{ width: '100%', height: 'calc(100% - 40px)', minHeight: '300px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+          <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.6}/>
@@ -71,9 +71,9 @@ export const Charts: React.FC<ChartsProps> = ({ data, state, updateState }) => {
               axisLine={false}
               tickLine={false}
               tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} 
-              tickMargin={15}
-              interval={0}
-              minTickGap={0}
+              tickMargin={10}
+              interval="preserveStartEnd"
+              minTickGap={20}
             />
             <YAxis 
               stroke="var(--text-muted)" 
@@ -98,7 +98,12 @@ export const Charts: React.FC<ChartsProps> = ({ data, state, updateState }) => {
               formatter={(value: number | undefined, name: string | undefined) => [value != null ? formatCurrency(value) : '-', name ?? ''] as [string, string]}
               cursor={{ stroke: 'var(--primary)', strokeWidth: 1, fill: 'var(--bg-surface)', strokeDasharray: state.chartStyle === 'area' ? '4 4' : 'none' }}
             />
-            <Legend verticalAlign="top" align="right" height={40} iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 500 }} />
+            <Legend 
+              verticalAlign="bottom" 
+              align="center" 
+              wrapperStyle={{ fontSize: '11px', fontWeight: 500, paddingTop: '10px' }} 
+              iconType="circle" 
+            />
             
             {state.isCombinedView ? (
               <>
