@@ -185,7 +185,7 @@ export default function App() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Desktop Sidebar OR Mobile Drawer */}
         <div 
-          className={state.isMobileInputOpen ? "mobile-drawer-overlay" : ""}
+          className={`sidebar-container ${state.isMobileInputOpen ? "mobile-drawer-overlay" : ""}`}
           onClick={() => state.isMobileInputOpen && updateState('isMobileInputOpen', false)}
           style={{
             width: state.isFullScreenDashboard && !state.isMobileInputOpen ? '0' : (state.isMobileInputOpen ? '100%' : '380px'),
