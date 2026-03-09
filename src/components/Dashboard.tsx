@@ -1,11 +1,12 @@
 import React from 'react';
-import { 
-  Maximize2, 
-  Minimize2, 
-  TrendingUp, 
-  Coins, 
-  HandCoins, 
+import {
+  Maximize2,
+  Minimize2,
+  TrendingUp,
+  Coins,
+  HandCoins,
   CalendarDays,
+  Download,
   ShieldCheck,
   ShieldAlert
 } from 'lucide-react';
@@ -84,17 +85,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
 
   return (
     <div className="dashboard-container">
-      <header style={{ marginBottom: 'var(--spacing-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="dashboard-header" style={{ marginBottom: 'var(--spacing-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, var(--text-primary), var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
+          <h1 className="mobile-hide" style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, var(--text-primary), var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
             Retirement Projection
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Advanced analysis of cumulative household wealth.</p>
+          <p className="mobile-hide" style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            Advanced analysis of cumulative household wealth.
+          </p>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+
+        <div className="dashboard-top-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {state.hasSpouse && (
+            <div className="combined-toggle segmented-toggle" style={{ width: '100%', maxWidth: '320px' }}>
+              <span
+                className="segmented-toggle-thumb"
+                style={{
+                  width: 'calc((100% - 4px) / 2)',
+                  transform: `translateX(${state.isCombinedView ? 100 : 0}%)`
+                }}
+              />
+              <button
+                onClick={() => updateState('isCombinedView', false)}
+                className={`segmented-toggle-btn ${!state.isCombinedView ? 'active' : ''}`}
+              >
+                Separate
+              </button>
+              <button
+                onClick={() => updateState('isCombinedView', true)}
+                className={`segmented-toggle-btn ${state.isCombinedView ? 'active' : ''}`}
+              >
+                Combined
+              </button>
+            </div>
+          )}
+
           <button
             onClick={handleDownloadPDF}
+            className="pdf-button"
+            aria-label="Export Report PDF"
+            title="Export Report PDF"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -111,84 +141,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
           >
-            <ShieldCheck size={16} /> {/* Placeholder icon, could use Download */}
-            Export PDF
+            <Download size={16} />
+            <span className="mobile-hide">Export PDF</span>
           </button>
 
-
-
-          {state.hasSpouse && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.4rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border)' }}>
-              <button 
-                onClick={() => updateState('isCombinedView', false)}
-                style={{ 
-                  background: !state.isCombinedView ? 'var(--primary)' : 'transparent', 
-                  color: !state.isCombinedView ? 'white' : 'var(--text-secondary)',
-                  border: 'none', padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600, fontSize: '0.85rem',
-                  cursor: 'pointer', transition: 'all 0.2s'
-                }}
-              >
-                Separate
-              </button>
-              <button 
-                onClick={() => updateState('isCombinedView', true)}
-                style={{ 
-                  background: state.isCombinedView ? 'var(--primary)' : 'transparent', 
-                  color: state.isCombinedView ? 'white' : 'var(--text-secondary)',
-                  border: 'none', padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: 600, fontSize: '0.85rem',
-                  cursor: 'pointer', transition: 'all 0.2s'
-                }}
-              >
-                Combined
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => updateState('isFullScreenDashboard', !state.isFullScreenDashboard)}
+            className="hide-on-mobile"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              padding: '0.6rem',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              color: 'var(--text-primary)',
+              transition: 'all 0.2s'
+            }}
+            title={state.isFullScreenDashboard ? 'Show Inputs' : 'Full Screen Chart'}
+          >
+            {state.isFullScreenDashboard ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
 
           {state.hasSpouse && !state.isCombinedView && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.25rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <div className="separate-options segmented-toggle" style={{ width: '100%' }}>
+              <span
+                className="segmented-toggle-thumb"
+                style={{
+                  width: 'calc((100% - 4px) / 3)',
+                  transform: `translateX(${({ user: 0, spouse: 1, both: 2 }[state.separateChartView]) * 100}%)`
+                }}
+              />
               {(['user', 'spouse', 'both'] as const).map((view) => (
-                <button 
+                <button
                   key={view}
                   onClick={() => updateState('separateChartView', view)}
-
-                  style={{ 
-                    background: state.separateChartView === view ? 'rgba(59, 130, 246, 0.15)' : 'transparent', 
-                    color: state.separateChartView === view ? 'var(--primary)' : 'var(--text-secondary)',
-                    border: 'none', padding: '0.35rem 0.75rem', borderRadius: '4px', fontWeight: 600, fontSize: '0.75rem',
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    textTransform: 'capitalize'
-                  }}
+                  className={`segmented-toggle-btn ${state.separateChartView === view ? 'active' : ''}`}
+                  style={{ textTransform: 'capitalize' }}
                 >
                   {view}
                 </button>
               ))}
             </div>
           )}
-
-          <button 
-            onClick={() => updateState('isFullScreenDashboard', !state.isFullScreenDashboard)}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              background: 'var(--bg-surface)', 
-              border: '1px solid var(--border)', 
-              padding: '0.6rem', 
-              borderRadius: 'var(--radius-md)', 
-              cursor: 'pointer', 
-              color: 'var(--text-primary)',
-              transition: 'all 0.2s'
-            }}
-            title={state.isFullScreenDashboard ? "Show Inputs" : "Full Screen Chart"}
-          >
-            {state.isFullScreenDashboard ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          </button>
         </div>
       </header>
-      
+
       {/* Primary Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-2xl)' }}>
-        
+
         {/* Plan Runway */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', borderLeft: hasMoneyAtEnd ? '4px solid var(--accent-1)' : '4px solid var(--danger)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -224,7 +227,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
             )}
           </div>
         </div>
-        
+
         {/* Total Contributions */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', animationDelay: '0.2s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -244,7 +247,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
             )}
           </div>
         </div>
-        
+
         {/* Employer Match */}
         <div className="glass-panel animate-fade-in" style={{ padding: 'var(--spacing-xl)', animationDelay: '0.3s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -283,7 +286,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, state, updateState }
         </div>
       </div>
 
-      <Charts data={data} state={state} updateState={updateState} />
+        <div className="chart-wrapper"><Charts data={data} state={state} updateState={updateState} /></div>
       <AmortizationTable data={data} state={state} />
     </div>
   );

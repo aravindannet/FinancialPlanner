@@ -10,11 +10,37 @@ interface TableProps {
 
 export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
   const formatNum = (val: number) => Math.round(val).toLocaleString();
+  const ageColumnWidth = '88px';
+
+  const tableStyle: React.CSSProperties = {
+    width: 'max-content',
+    minWidth: '100%',
+    borderCollapse: 'collapse',
+    textAlign: 'right',
+    whiteSpace: 'nowrap',
+    fontSize: '0.9rem'
+  };
 
   const renderTableHead = () => (
     <thead>
       <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-        <th style={{ padding: '0.75rem', textAlign: 'left', position: 'sticky', left: 0, background: 'var(--bg-base)', zIndex: 10, borderRight: '1px solid var(--border)' }}>Age</th>
+        <th
+          style={{
+            padding: '0.75rem',
+            textAlign: 'left',
+            position: 'sticky',
+            left: 0,
+            width: ageColumnWidth,
+            minWidth: ageColumnWidth,
+            maxWidth: ageColumnWidth,
+            background: 'var(--bg-base)',
+            zIndex: 14,
+            borderRight: '1px solid var(--border)',
+            boxShadow: '10px 0 14px -10px rgba(0, 0, 0, 0.85)'
+          }}
+        >
+          Age
+        </th>
         <th style={{ padding: '0.75rem' }}>
           Starting (Nominal)
           <InfoTooltip text="Account value at the start of the year." />
@@ -47,7 +73,24 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
     
     return (
       <tr style={{ borderBottom: '1px solid var(--border)', background: bg }} className="table-row-hover">
-        <td style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 500, position: 'sticky', left: 0, background: bg === 'transparent' ? 'var(--bg-base)' : bg, zIndex: 9, borderRight: '1px solid var(--border)' }}>{displayAge}</td>
+        <td
+          style={{
+            padding: '0.75rem',
+            textAlign: 'left',
+            fontWeight: 600,
+            position: 'sticky',
+            left: 0,
+            width: ageColumnWidth,
+            minWidth: ageColumnWidth,
+            maxWidth: ageColumnWidth,
+            background: 'var(--bg-base)',
+            zIndex: 13,
+            borderRight: '1px solid var(--border)',
+            boxShadow: '10px 0 14px -10px rgba(0, 0, 0, 0.85)'
+          }}
+        >
+          {displayAge}
+        </td>
         <td style={{ padding: '0.75rem' }}>${formatNum(d.startingBalanceNominal)}</td>
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.contributions)}</td>
         <td style={{ padding: '0.75rem', color: 'var(--accent-1)' }}>+ ${formatNum(d.employerMatch)}</td>
@@ -68,40 +111,46 @@ export const AmortizationTable: React.FC<TableProps> = ({ data, state }) => {
 
   if (!state.hasSpouse || state.isCombinedView) {
     return (
-      <div className="glass-panel" style={{ marginTop: 'var(--spacing-xl)', padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%', minHeight: '600px', flexShrink: 0 }}>
+      <div className="glass-panel" style={{ marginTop: 'var(--spacing-xl)', padding: 'var(--spacing-xl)', width: '100%', minHeight: '600px', flexShrink: 0 }}>
         <h3 style={{ marginBottom: 'var(--spacing-md)', fontSize: '1.25rem' }}>
           Yearly Breakdown {state.hasSpouse ? '(Household Total)' : '(Primary Only)'}
         </h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
-          {renderTableHead()}
-          <tbody>
-            {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'combined', 'transparent')}</React.Fragment>)}
-          </tbody>
-        </table>
+        <div className="amortization-table-scroll" style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={tableStyle}>
+            {renderTableHead()}
+            <tbody>
+              {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'combined', 'transparent')}</React.Fragment>)}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-xl)', width: '100%', minHeight: '600px', flexShrink: 0 }}>
-      <div className="glass-panel" style={{ padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%' }}>
+      <div className="glass-panel" style={{ padding: 'var(--spacing-xl)', width: '100%' }}>
         <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--primary)', fontSize: '1.25rem' }}>Primary Breakdown</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
-          {renderTableHead()}
-          <tbody>
-            {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'user', 'rgba(59, 130, 246, 0.05)')}</React.Fragment>)}
-          </tbody>
-        </table>
+        <div className="amortization-table-scroll" style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={tableStyle}>
+            {renderTableHead()}
+            <tbody>
+              {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'user', 'rgba(59, 130, 246, 0.05)')}</React.Fragment>)}
+            </tbody>
+          </table>
+        </div>
       </div>
       
-      <div className="glass-panel" style={{ padding: 'var(--spacing-xl)', overflowX: 'auto', width: '100%' }}>
+      <div className="glass-panel" style={{ padding: 'var(--spacing-xl)', width: '100%' }}>
         <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--accent-1)', fontSize: '1.25rem' }}>Spouse Breakdown</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
-          {renderTableHead()}
-          <tbody>
-            {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'spouse', 'rgba(16, 185, 129, 0.05)')}</React.Fragment>)}
-          </tbody>
-        </table>
+        <div className="amortization-table-scroll" style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={tableStyle}>
+            {renderTableHead()}
+            <tbody>
+              {data.map((year, i) => <React.Fragment key={i}>{renderRow(year, 'spouse', 'rgba(16, 185, 129, 0.05)')}</React.Fragment>)}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

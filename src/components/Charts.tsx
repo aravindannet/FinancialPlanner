@@ -37,18 +37,20 @@ export const Charts: React.FC<ChartsProps> = ({ data, state, updateState }) => {
         <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
           Wealth Projection ({state.isCombinedView ? 'Household Total' : 'Separate Accounts'})
         </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface)', padding: '0.25rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+        <div className="segmented-toggle" style={{ width: '140px' }}>
+          <span
+            className="segmented-toggle-thumb"
+            style={{
+              width: 'calc((100% - 4px) / 2)',
+              transform: `translateX(${state.chartStyle === 'bar' ? 100 : 0}%)`
+            }}
+          />
           {(['area', 'bar'] as const).map((style) => (
-            <button 
+            <button
               key={style}
               onClick={() => updateState('chartStyle', style)}
-              style={{ 
-                background: state.chartStyle === style ? 'rgba(59, 130, 246, 0.15)' : 'transparent', 
-                color: state.chartStyle === style ? 'var(--primary)' : 'var(--text-secondary)',
-                border: 'none', padding: '0.35rem 0.75rem', borderRadius: '4px', fontWeight: 600, fontSize: '0.75rem',
-                cursor: 'pointer', transition: 'all 0.2s',
-                textTransform: 'capitalize'
-              }}
+              className={`segmented-toggle-btn ${state.chartStyle === style ? 'active' : ''}`}
+              style={{ textTransform: 'capitalize', fontSize: '0.75rem' }}
             >
               {style}
             </button>

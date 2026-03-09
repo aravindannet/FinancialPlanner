@@ -230,7 +230,9 @@ export default function App() {
           </button>
         </main>
 
-        <ChatInterface data={projectionData} state={state} updateState={updateState} />
+        <div className="hide-on-mobile">
+          <ChatInterface data={projectionData} state={state} updateState={updateState} />
+        </div>
       </div>
     </div>
   );

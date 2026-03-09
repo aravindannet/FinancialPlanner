@@ -13,7 +13,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
   return (
     <div className="glass-panel" style={{ width: '100%', height: '100%', flexShrink: 0, padding: 'var(--spacing-md)', overflowY: 'auto', borderLeft: 'none', borderTop: 'none', borderBottom: 'none' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xl)' }}>
-        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Assumptions</h2>
+        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Household Assumptions</h2>
         <button 
           className="show-on-mobile"
           onClick={() => updateState('isMobileInputOpen', false)}
@@ -49,7 +49,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div className="input-group">
           <label className="input-label">
             Age you plan to stop working <span className="value">{state.retireAge}</span>
-            <InfoTooltip align="right" text="Age you plan to stop working and begin withdrawals." />
+            <InfoTooltip align="right" text="Age you plan to stop working." />
           </label>
           <input type="range" min={state.userAge} max="90" value={state.retireAge} onChange={(e) => updateState('retireAge', Number(e.target.value))} />
         </div>
@@ -75,7 +75,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
                 </div>
               } />
             </label>
-            <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+            <div className="segmented-toggle" style={{ width: '88px' }}>
+              <span
+                className="segmented-toggle-thumb"
+                style={{
+                  width: 'calc((100% - 4px) / 2)',
+                  transform: `translateX(${state.userContributionType === 'percent' ? 100 : 0}%)`
+                }}
+              />
               {['dollar', 'percent'].map((type) => (
                 <button
                   key={type}
@@ -89,16 +96,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
                     }
                     updateState({ userContributionType: type as any, userContribution: newValue });
                   }}
-                  style={{
-                    padding: '2px 8px',
-                    fontSize: '0.65rem',
-                    border: 'none',
-                    borderRadius: '4px',
-                    background: state.userContributionType === type ? 'var(--primary)' : 'transparent',
-                    color: state.userContributionType === type ? 'white' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
+                  className={`segmented-toggle-btn ${state.userContributionType === type ? 'active' : ''}`}
+                  style={{ fontSize: '0.65rem', padding: '2px 8px' }}
                 >
                   {type === 'dollar' ? '$' : '%'}
                 </button>
@@ -196,7 +195,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div className="input-group">
           <label className="input-label">
             Age you plan to stop working <span className="value">{state.spouseRetireAge}</span>
-            <InfoTooltip align="right" text="Age your spouse plans to retire." />
+            <InfoTooltip align="right" text="Age your spouse plans to stop working." />
           </label>
           <input type="range" min={state.spouseAge} max="90" value={state.spouseRetireAge} onChange={(e) => updateState('spouseRetireAge', Number(e.target.value))} />
         </div>
@@ -222,7 +221,15 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
                 </div>
               } />
             </label>
-            <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+            <div className="segmented-toggle" style={{ width: '88px' }}>
+              <span
+                className="segmented-toggle-thumb"
+                style={{
+                  width: 'calc((100% - 4px) / 2)',
+                  transform: `translateX(${state.spouseContributionType === 'percent' ? 100 : 0}%)`,
+                  background: 'var(--accent-2)'
+                }}
+              />
               {['dollar', 'percent'].map((type) => (
                 <button
                   key={type}
@@ -236,16 +243,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
                     }
                     updateState({ spouseContributionType: type as any, spouseContribution: newValue });
                   }}
-                  style={{
-                    padding: '2px 8px',
-                    fontSize: '0.65rem',
-                    border: 'none',
-                    borderRadius: '4px',
-                    background: state.spouseContributionType === type ? 'var(--accent-2)' : 'transparent',
-                    color: state.spouseContributionType === type ? 'white' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
+                  className={`segmented-toggle-btn ${state.spouseContributionType === type ? 'active' : ''}`}
+                  style={{ fontSize: '0.65rem', padding: '2px 8px' }}
                 >
                   {type === 'dollar' ? '$' : '%'}
                 </button>
@@ -357,7 +356,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
         <div className="input-group">
           <label className="input-label">
             Primary Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecurityUser.toLocaleString()}/mo</span>
-            <InfoTooltip align="right" text="Expected monthly Social Security benefit for the primary user." />
+            <InfoTooltip align="right" text="Expected monthly Social Security benefit for the primary user. Note: If you receive Social Security, the simulation automatically reduces retirement account withdrawals since Social Security income offsets your withdrawal needs." />
           </label>
           <input type="range" min="0" max="6000" step="100" value={state.socialSecurityUser} onChange={(e) => updateState('socialSecurityUser', Number(e.target.value))} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
@@ -387,7 +386,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ state, updateState }) =>
           <div className="input-group">
             <label className="input-label">
               Spouse Social Security <span className="value" style={{ color: 'var(--accent-1)' }}>${state.socialSecuritySpouse.toLocaleString()}/mo</span>
-              <InfoTooltip align="right" text="Expected monthly Social Security benefit for the spouse." />
+              <InfoTooltip align="right" text="Expected monthly Social Security benefit for your spouse. Note: Social Security income reduces the required withdrawals from retirement accounts in the simulation, as it supplements your household income needs." />
             </label>
             <input type="range" min="0" max="6000" step="100" value={state.socialSecuritySpouse} onChange={(e) => updateState('socialSecuritySpouse', Number(e.target.value))} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
