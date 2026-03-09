@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Info } from 'lucide-react';
 
 interface InfoTooltipProps {
@@ -9,6 +9,24 @@ interface InfoTooltipProps {
 
 export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center', children }) => {
   const [show, setShow] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchHandledRef = useRef(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (isTouchDevice && show && containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setShow(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [show, isTouchDevice]);
 
   const getPositionStyles = () => {
     switch(align) {
@@ -26,11 +44,51 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center'
     }
   };
 
+  const handleTouch = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    touchHandledRef.current = true;
+    setIsTouchDevice(true);
+    setShow(!show);
+    
+    // Reset the flag after a delay to allow future clicks
+    setTimeout(() => {
+      touchHandledRef.current = false;
+    }, 300);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Ignore click if it was just preceded by a touch event
+    if (touchHandledRef.current) {
+      return;
+    }
+    
+    e.stopPropagation();
+    if (isTouchDevice) {
+      setShow(!show);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (!isTouchDevice) {
+      setShow(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isTouchDevice) {
+      setShow(false);
+    }
+  };
+
   return (
     <div 
+      ref={containerRef}
       style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: children ? '0' : '0.25rem', cursor: 'help' }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+      onTouchStart={handleTouch}
     >
       {children || <Info size={14} color="var(--text-muted)" />}
       
@@ -50,7 +108,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, align = 'center'
           borderRadius: 'var(--radius-md)',
           border: '1px solid var(--border)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-          zIndex: 100,
+          zIndex: 1000,
           whiteSpace: 'pre-wrap',
           textAlign: 'left'
         }}>
